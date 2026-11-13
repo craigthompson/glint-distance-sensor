@@ -1,0 +1,41 @@
+# Glint Distance Sensor - factory firmware
+# This is what the GitHub workflow builds and what ships on new units / the web
+# installer. It adds onboarding and update features on top of the core config;
+# a user who takes control in their ESPHome dashboard imports only the core file.
+
+packages:
+  core: !include glint-distance-sensor.yaml
+
+esphome:
+  project:
+    name: craigthompson.glint-distance-sensor
+    version: dev  # replaced with the release version by the GitHub workflow
+
+# Lets the ESPHome dashboard offer "Take Control" for discovered units.
+dashboard_import:
+  package_import_url: github://craigthompson/glint-distance-sensor/glint-distance-sensor.yaml@main
+  import_full_config: false
+
+# Wi-Fi onboarding over Bluetooth (Home Assistant, or a Web Bluetooth page).
+# The BOOT button must be pressed to authorize, so only someone with the device
+# in hand can set it up.
+esp32_ble:
+  name: glint  # advertised as glint-XXXXXX; short enough to fit a BLE packet
+
+improv_ble:
+  authorizer: boot_button
+  authorized_duration: 2min
+
+# Wi-Fi onboarding over USB from the web installer.
+improv_serial:
+
+# Firmware updates published as GitHub releases appear in Home Assistant.
+http_request:
+
+ota:
+  - platform: http_request
+
+update:
+  - platform: http_request
+    name: Firmware
+    source: https://craigthompson.github.io/glint-distance-sensor/firmware/glint-distance-sensor.manifest.json

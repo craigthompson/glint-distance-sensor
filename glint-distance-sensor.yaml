@@ -1,0 +1,376 @@
+# Glint Distance Sensor - core configuration
+# ESP32-C3 Super Mini + VL53L0X time-of-flight sensor, USB powered.
+# https://github.com/craigthompson/glint-distance-sensor
+#
+# This is the file a user's ESPHome dashboard imports on "Take Control".
+# Factory-only extras (Improv onboarding, firmware updates from GitHub) live in
+# glint-distance-sensor.factory.yaml.
+#
+# Wiring:
+#   VL53L0X VIN   -> 3.3V
+#   VL53L0X GND   -> GND
+#   VL53L0X SCL   -> IO6
+#   VL53L0X SDA   -> IO7
+#   VL53L0X XSHUT -> IO5   (hardware reset/enable; the GPIO1 interrupt pin is not used)
+#   Onboard LED   =  IO8   (active low)
+#   BOOT button   =  IO9   (Improv authorization; hold 10 s for factory reset)
+
+substitutions:
+  device_name: glint-distance-sensor
+  friendly_name: Glint Distance Sensor
+
+esphome:
+  name: ${device_name}
+  friendly_name: ${friendly_name}
+  name_add_mac_suffix: true
+  on_boot:
+    priority: -100
+    then:
+      - light.turn_on:
+          id: status_led
+          effect: Breathe
+
+esp32:
+  board: esp32-c3-devkitm-1
+  framework:
+    type: esp-idf
+
+# ESPHome's captive_portal with a branded setup page
+# (components/captive_portal/portal.html -> run tools/build_captive_portal.py).
+external_components:
+  - source: github://craigthompson/glint-distance-sensor@main
+    components: [captive_portal]
+
+logger:
+  level: INFO
+  hardware_uart: USB_SERIAL_JTAG
+
+api:
+  # No key: Home Assistant provisions a unique encryption key when the device is adopted.
+  encryption:
+  # A product should keep working (and measuring) when Home Assistant is down.
+  reboot_timeout: 0s
+  on_client_connected:
+    - delay: 10s
+    - if:
+        condition:
+          not:
+            script.is_running: measure
+        then:
+          - lambda: 'id(seconds_since_measure) = 0;'
+          - script.execute: measure
+
+ota:
+  - platform: esphome
+
+wifi:
+  ap:
+    ssid: "Glint Distance Sensor Setup"
+
+captive_portal:
+
+i2c:
+  id: bus_a
+  sda: GPIO7
+  scl: GPIO6
+  frequency: 400kHz
+  scan: false
+
+globals:
+  - id: measuring
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: sample_sum
+    type: float
+    restore_value: no
+    initial_value: '0'
+  - id: sample_count
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: fail_count
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: seconds_since_measure
+    type: uint32_t
+    restore_value: no
+    initial_value: '0'
+  - id: led_was_on
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: prev_effect
+    type: std::string
+    restore_value: no
+    initial_value: '"Breathe"'
+
+output:
+  - platform: ledc
+    id: led_output
+    pin: GPIO8
+    inverted: true
+
+light:
+  - platform: monochromatic
+    id: status_led
+    name: Status LED
+    output: led_output
+    entity_category: config
+    restore_mode: RESTORE_DEFAULT_ON
+    default_transition_length: 0s
+    effects:
+      - pulse:
+          name: Breathe
+          transition_length: 2s
+          update_interval: 2s
+          min_brightness: 0%
+          max_brightness: 100%
+      - strobe:
+          name: Measuring
+          colors:
+            - state: true
+              brightness: 100%
+              duration: 100ms
+            - state: false
+              duration: 100ms
+
+binary_sensor:
+  - platform: gpio
+    id: boot_button
+    name: Button
+    internal: true
+    pin:
+      number: GPIO9
+      mode: INPUT_PULLUP
+      inverted: true
+    filters:
+      - delayed_on: 20ms
+    on_click:
+      # Hold the BOOT button 10 s to wipe Wi-Fi and settings.
+      - min_length: 10s
+        max_length: 60s
+        then:
+          - button.press: factory_reset_button
+
+sensor:
+  # Raw readings; only used by the measure script, never shown in Home Assistant.
+  - platform: vl53l0x
+    id: vl53_raw
+    internal: true
+    i2c_id: bus_a
+    address: 0x29
+    # enable_pin: GPIO5
+    long_range: true
+    timeout: 500ms
+    update_interval: never
+    on_value:
+      then:
+        - lambda: |-
+            // The vl53l0x component reports metres; everything else here is mm.
+            if (id(measuring) && !std::isnan(x) && x > 0) {
+              id(sample_sum) += x * 1000.0f;
+              id(sample_count) += 1;
+            }
+
+  - platform: template
+    id: distance
+    name: Distance
+    unit_of_measurement: mm
+    device_class: distance
+    state_class: measurement
+    accuracy_decimals: 0
+    update_interval: never
+
+  # Optional mapping of distance onto a 0-100 % range set by the user
+  # (e.g. salt or bin fill level). Unavailable until both ends are set.
+  - platform: template
+    id: percentage
+    name: Percentage
+    unit_of_measurement: "%"
+    state_class: measurement
+    accuracy_decimals: 0
+    update_interval: never
+    lambda: |-
+      const float d = id(distance).state;
+      const float d0 = id(zero_pct_distance).state;
+      const float d100 = id(full_pct_distance).state;
+      if (std::isnan(d) || std::isnan(d0) || std::isnan(d100) || d0 == d100) {
+        return NAN;
+      }
+      float pct = (d0 - d) / (d0 - d100) * 100.0f;
+      if (pct < 0.0f) pct = 0.0f;
+      if (pct > 100.0f) pct = 100.0f;
+      return pct;
+
+  - platform: wifi_signal
+    name: Wi-Fi Signal
+    update_interval: 5min
+    entity_category: diagnostic
+
+  - platform: uptime
+    name: Uptime
+    update_interval: 5min
+    entity_category: diagnostic
+
+text_sensor:
+  - platform: version
+    name: Firmware Version
+    hide_timestamp: true
+    entity_category: diagnostic
+
+number:
+  - platform: template
+    id: zero_pct_distance
+    name: 0% Distance
+    unit_of_measurement: mm
+    icon: mdi:arrow-collapse-down
+    min_value: 0
+    max_value: 2000
+    step: 1
+    mode: box
+    optimistic: true
+    restore_value: true
+    initial_value: 0
+    entity_category: config
+    on_value:
+      - component.update: percentage
+
+  - platform: template
+    id: full_pct_distance
+    name: 100% Distance
+    unit_of_measurement: mm
+    icon: mdi:arrow-collapse-up
+    min_value: 0
+    max_value: 2000
+    step: 1
+    mode: box
+    optimistic: true
+    restore_value: true
+    initial_value: 0
+    entity_category: config
+    on_value:
+      - component.update: percentage
+
+  - platform: template
+    id: measure_interval
+    name: Measurement Interval
+    unit_of_measurement: s
+    icon: mdi:timer-outline
+    min_value: 5
+    max_value: 86400
+    step: 1
+    mode: box
+    optimistic: true
+    restore_value: true
+    initial_value: 1800
+    entity_category: config
+
+  - platform: template
+    id: samples_per_measurement
+    name: Samples per Measurement
+    icon: mdi:counter
+    min_value: 1
+    max_value: 10
+    step: 1
+    mode: slider
+    optimistic: true
+    restore_value: true
+    initial_value: 5
+    entity_category: config
+
+button:
+  - platform: template
+    name: Measure Now
+    icon: mdi:ruler
+    on_press:
+      - if:
+          condition:
+            not:
+              script.is_running: measure
+          then:
+            - lambda: 'id(seconds_since_measure) = 0;'
+            - script.execute: measure
+
+  - platform: restart
+    name: Restart
+    entity_category: diagnostic
+
+  - platform: factory_reset
+    id: factory_reset_button
+    name: Factory Reset
+    entity_category: config
+    disabled_by_default: true
+
+script:
+  - id: measure
+    mode: single
+    then:
+      # Flash the LED while measuring, if the user has it on.
+      - lambda: |-
+          id(led_was_on) = id(status_led).current_values.is_on();
+          id(prev_effect) = id(status_led).get_effect_name();
+          id(sample_sum) = 0;
+          id(sample_count) = 0;
+          id(measuring) = true;
+      - if:
+          condition:
+            lambda: 'return id(led_was_on);'
+          then:
+            - light.turn_on:
+                id: status_led
+                effect: Measuring
+      - repeat:
+          count: !lambda 'return (int) id(samples_per_measurement).state;'
+          then:
+            - component.update: vl53_raw
+            - delay: 200ms
+      - lambda: |-
+          id(measuring) = false;
+          const int wanted = (int) id(samples_per_measurement).state;
+          const int needed = (wanted + 1) / 2;  // at least half the samples must be valid
+          if (id(sample_count) >= needed && id(sample_count) > 0) {
+            id(distance).publish_state(id(sample_sum) / id(sample_count));
+            id(fail_count) = 0;
+          } else {
+            // Nothing in range is a normal result (publish unknown). Only count it
+            // as a fault when the sensor itself is erroring (I2C/timeout).
+            ESP_LOGW("measure", "Only %d of %d samples valid", id(sample_count), wanted);
+            id(distance).publish_state(NAN);
+            if (id(vl53_raw).is_failed() || id(vl53_raw).status_has_warning()) {
+              id(fail_count) += 1;
+            }
+          }
+      - component.update: percentage
+      - if:
+          condition:
+            lambda: 'return id(led_was_on);'
+          then:
+            - light.turn_on:
+                id: status_led
+                effect: !lambda 'return id(prev_effect);'
+      # Sensor stuck? Reboot: setup drives XSHUT low then high, fully resetting the VL53L0X.
+      - if:
+          condition:
+            lambda: 'return id(fail_count) >= 3;'
+          then:
+            - logger.log:
+                level: WARN
+                format: "Sensor failed 3 measurements in a row, rebooting to reset it"
+            - delay: 1s
+            - lambda: 'App.safe_reboot();'
+
+interval:
+  - interval: 1s
+    then:
+      - lambda: 'id(seconds_since_measure) += 1;'
+      - if:
+          condition:
+            and:
+              - lambda: 'return id(seconds_since_measure) >= (uint32_t) id(measure_interval).state;'
+              - not:
+                  script.is_running: measure
+          then:
+            - lambda: 'id(seconds_since_measure) = 0;'
+            - script.execute: measure

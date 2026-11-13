@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Glint Distance Sensor Setup</title>
+<link rel="icon" href="data:,">
+<style>
+:root{--bg:#f3f5f8;--card:#fff;--text:#16202c;--muted:#64707f;--line:#e3e7ec;--accent:#0b7cff;--accent-text:#fff;--ok:#1a9b5b;--err:#d4372c;--hover:#f0f4f9}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1318;--card:#1a2028;--text:#e8edf3;--muted:#93a0ae;--line:#2a323d;--accent:#3d97ff;--hover:#222a34}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+main{max-width:440px;margin:0 auto;padding:28px 16px 40px}
+header{text-align:center;margin-bottom:22px}
+.logo{width:64px;height:64px;margin:0 auto 12px;border-radius:18px;background:var(--accent);display:flex;align-items:center;justify-content:center}
+.logo svg{width:38px;height:38px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round}
+h1{font-size:1.45rem;margin:0 0 4px}
+.sub{color:var(--muted);margin:0;font-size:.95rem}
+.card{background:var(--card);border-radius:16px;box-shadow:0 1px 3px rgba(0,0,0,.08);overflow:hidden;margin-bottom:16px}
+.card-h{display:flex;justify-content:space-between;align-items:center;padding:14px 16px 6px}
+.card-h h2{font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0}
+.link{background:none;border:0;color:var(--accent);font:inherit;font-size:.9rem;cursor:pointer;padding:4px}
+.net{display:flex;align-items:center;gap:12px;width:100%;padding:13px 16px;border:0;border-top:1px solid var(--line);background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.net:first-child{border-top:0}
+.net:hover,.net:focus-visible{background:var(--hover);outline:none}
+.net .name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.net svg{flex:none;width:22px;height:22px}
+.bars rect{fill:var(--line)}.bars rect.on{fill:var(--text)}
+.lock{fill:var(--muted)}
+.empty{padding:18px 16px;color:var(--muted);text-align:center}
+.spin{display:inline-block;width:16px;height:16px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:s 1s linear infinite;vertical-align:-3px;margin-right:8px}
+@keyframes s{to{transform:rotate(360deg)}}
+.hint{color:var(--muted);font-size:.85rem;text-align:center;margin:0 8px 16px}
+form{padding:16px}
+label{display:block;font-size:.85rem;color:var(--muted);margin:0 0 6px}
+.field{position:relative;margin-bottom:14px}
+input{width:100%;padding:12px 14px;font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:10px;-webkit-appearance:none}
+input:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:transparent}
+.field .show{position:absolute;right:6px;bottom:6px}
+.btn{width:100%;padding:13px;font:600 1rem inherit;font-family:inherit;color:var(--accent-text);background:var(--accent);border:0;border-radius:10px;cursor:pointer}
+.btn:disabled{opacity:.6}
+.back{display:block;margin:10px auto 0}
+.done{padding:28px 20px;text-align:center}
+.done .check{width:56px;height:56px;margin:0 auto 12px;border-radius:50%;background:var(--ok);display:flex;align-items:center;justify-content:center}
+.done .check svg{width:30px;height:30px;stroke:#fff;stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.done h2{margin:0 0 8px;font-size:1.2rem}
+.done ol{text-align:left;color:var(--muted);padding-left:20px;margin:14px 0 0}
+.err{color:var(--err);font-size:.9rem;margin:-4px 0 12px}
+details{color:var(--muted);font-size:.85rem;text-align:center}
+details summary{cursor:pointer;padding:6px}
+details form{text-align:left;padding:12px 0 0}
+details input[type=file]{padding:10px;font-size:.85rem;margin-bottom:10px}
+.mac{margin-top:10px;font-variant-numeric:tabular-nums}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main>
+<header>
+<div class="logo"><svg viewBox="0 0 24 24"><path d="M12 3v13M7 11l5 5 5-5M4 21h16"/></svg></div>
+<h1 id="title">Glint Distance Sensor</h1>
+<p class="sub">Connect your sensor to Wi-Fi</p>
+</header>
+
+<section id="pick">
+<div class="card">
+<div class="card-h"><h2>Choose a network</h2><button class="link" id="refresh" type="button">Refresh</button></div>
+<div id="list"><div class="empty"><span class="spin"></span>Looking for networks…</div></div>
+<button class="net" id="other" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span class="name">Other network…</span></button>
+</div>
+<p class="hint">Only 2.4&nbsp;GHz Wi-Fi networks are supported and shown.</p>
+</section>
+
+<section id="join" hidden>
+<div class="card">
+<form id="form">
+<div class="field"><label for="ssid">Network name</label><input id="ssid" name="ssid" maxlength="32" autocomplete="off" autocapitalize="none" spellcheck="false" required></div>
+<div class="field"><label for="psk">Password</label><input id="psk" name="psk" type="password" maxlength="64" autocomplete="current-password"><button class="link show" id="toggle" type="button">Show</button></div>
+<p class="err" id="err" hidden></p>
+<button class="btn" id="save">Connect</button>
+<button class="link back" id="back" type="button">Back to networks</button>
+</form>
+</div>
+</section>
+
+<section id="done" hidden>
+<div class="card done">
+<div class="check"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+<h2>Connecting to <span id="dssid"></span></h2>
+<p class="sub">The sensor's light will go back to a slow fade once it is online. This setup network will then disappear.</p>
+<ol>
+<li>Reconnect your phone to your home Wi-Fi.</li>
+<li>Open Home Assistant. Look for a newly discovered <b>ESPHome</b> device in Settings → Devices &amp; services.</li>
+<li>Tap <b>Add</b>.</li>
+</ol>
+<p class="sub" style="margin-top:14px">If this network is still here after a minute, the password may have been wrong. Join it again to retry.</p>
+</div>
+</section>
+
+<details>
+<summary>Advanced</summary>
+<form method="POST" action="/update" enctype="multipart/form-data">
+<label for="fw">Install firmware file (.bin)</label>
+<input id="fw" type="file" name="update" accept=".bin">
+<button class="btn">Upload firmware</button>
+</form>
+<div class="mac" id="mac"></div>
+</details>
+</main>
+
+<script>
+(function(){
+var $=function(i){return document.getElementById(i)};
+function show(id){['pick','join','done'].forEach(function(s){$(s).hidden=s!==id})}
+function bars(rssi){
+  var n=rssi>=-55?4:rssi>=-67?3:rssi>=-78?2:1,s='<svg class="bars" viewBox="0 0 24 24" aria-hidden="true">';
+  for(var i=0;i<4;i++){var h=5+i*5;s+='<rect x="'+(2+i*5.5)+'" y="'+(21-h)+'" width="4" height="'+h+'" rx="1"'+(i<n?' class="on"':'')+'/>'}
+  return s+'</svg>';
+}
+var lock='<svg class="lock" viewBox="0 0 24 24" aria-label="Secured"><path d="M7 10V8a5 5 0 0110 0v2h1a1 1 0 011 1v9a1 1 0 01-1 1H6a1 1 0 01-1-1v-9a1 1 0 011-1zm2 0h6V8a3 3 0 00-6 0z"/></svg>';
+function choose(ssid,secured){
+  $('ssid').value=ssid;$('psk').value='';$('err').hidden=true;
+  show('join');
+  (ssid&&secured!==false?$('psk'):ssid?$('save'):$('ssid')).focus();
+}
+function load(){
+  fetch('/config.json',{cache:'no-store'}).then(function(r){return r.json()}).then(function(c){
+    $('mac').textContent='Device: '+c.name+' · MAC '+c.mac;
+    var seen={},aps=c.aps.filter(function(a){return a&&a.ssid&&!seen[a.ssid]&&(seen[a.ssid]=1)});
+    aps.sort(function(a,b){return b.rssi-a.rssi});
+    var list=$('list');list.innerHTML='';
+    if(!aps.length){list.innerHTML='<div class="empty"><span class="spin"></span>Still scanning…</div>';setTimeout(load,3000);return}
+    aps.forEach(function(a){
+      var b=document.createElement('button');b.type='button';b.className='net';
+      b.innerHTML=bars(a.rssi)+'<span class="name"></span>'+(a.lock?lock:'');
+      b.querySelector('.name').textContent=a.ssid;
+      b.onclick=function(){choose(a.ssid,!!a.lock)};
+      list.appendChild(b);
+    });
+  }).catch(function(){setTimeout(load,3000)});
+}
+$('refresh').onclick=function(){$('list').innerHTML='<div class="empty"><span class="spin"></span>Looking for networks…</div>';load()};
+$('other').onclick=function(){choose('')};
+$('back').onclick=function(){show('pick')};
+$('toggle').onclick=function(){var p=$('psk'),h=p.type==='password';p.type=h?'text':'password';this.textContent=h?'Hide':'Show'};
+$('form').onsubmit=function(e){
+  e.preventDefault();
+  var ssid=$('ssid').value,psk=$('psk').value;
+  if(psk&&psk.length<8){$('err').textContent='Wi-Fi passwords are at least 8 characters.';$('err').hidden=false;return}
+  $('save').disabled=true;$('save').textContent='Saving…';
+  var done=function(){$('dssid').textContent=ssid;show('done')};
+  fetch('/wifisave?ssid='+encodeURIComponent(ssid)+'&psk='+encodeURIComponent(psk)).then(done,done);
+};
+load();
+})();
+</script>
+</body>
+</html>
