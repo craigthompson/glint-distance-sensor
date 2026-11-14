@@ -239,7 +239,7 @@ sensor:
 
   - platform: uptime
     name: Uptime
-    update_interval: 5min
+    update_interval: 60s
     entity_category: diagnostic
 
 text_sensor:
