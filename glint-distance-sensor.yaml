@@ -120,6 +120,16 @@ light:
     entity_category: config
     restore_mode: RESTORE_DEFAULT_ON
     default_transition_length: 0s
+    # Home Assistant's plain "turn on" sends no effect, which would leave the LED
+    # solid. Default back to Breathe; picking "None" afterwards still gives solid.
+    on_turn_on:
+      - if:
+          condition:
+            lambda: 'return id(status_led).get_effect_name() == "None";'
+          then:
+            - light.turn_on:
+                id: status_led
+                effect: Breathe
     effects:
       - pulse:
           name: Breathe
