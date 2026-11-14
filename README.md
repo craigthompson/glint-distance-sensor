@@ -49,7 +49,14 @@ The other files in `components/captive_portal/` are unmodified copies from ESPHo
 
 ## Releasing
 
-1. Push to `main`. **Release Drafter** creates a draft release with a CalVer version, and **Build** compiles the factory firmware and attaches it.
+Release notes appear in Home Assistant's update dialog, and they're built from merged pull requests. So make every change through a PR:
+
+- **Title:** written for users, e.g. "Status LED resumes breathing when turned back on".
+- **Label:** `enhancement` (New Features), `bug` (Bug Fixes), `breaking-change` (Breaking Changes), `documentation` or `maintenance` (collapsed sections), or `skip-changelog` to leave it out.
+
+Commits pushed straight to `main` don't appear in the notes.
+
+1. Merge PRs to `main`. **Release Drafter** creates or updates a draft release with a CalVer version, and **Build** compiles the factory firmware and attaches it.
 2. When the build finishes, run **Actions → Release → Run workflow**. That publishes the release and deploys the Pages site, and the new version shows up as an update in Home Assistant.
 
 ## License
