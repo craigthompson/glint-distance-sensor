@@ -18,6 +18,10 @@
 substitutions:
   device_name: glint-distance-sensor
   friendly_name: Glint Distance Sensor
+  # Ambient IR Level thresholds in kcps. Provisional: tune with indoor vs. direct
+  # sunlight tests on real installations.
+  ambient_ir_moderate_kcps: "200"
+  ambient_ir_high_kcps: "1000"
 
 esphome:
   name: ${device_name}
@@ -96,6 +100,15 @@ globals:
     initial_value: '0'
   - id: sample_count
     type: int
+    restore_value: no
+    initial_value: '0'
+  # Sums of the VL53L0X's signal and ambient rates (kcps) over valid samples.
+  - id: signal_sum
+    type: float
+    restore_value: no
+    initial_value: '0'
+  - id: ambient_sum
+    type: float
     restore_value: no
     initial_value: '0'
   - id: sample_min
@@ -228,6 +241,13 @@ sensor:
               id(sample_count) += 1;
               if (std::isnan(id(sample_min)) || mm < id(sample_min)) id(sample_min) = mm;
               if (std::isnan(id(sample_max)) || mm > id(sample_max)) id(sample_max) = mm;
+              // The driver only reads the range, but the rest of the result block
+              // stays valid until the next reading: signal rate at 0x1A and ambient
+              // rate at 0x1C, both 9.7 fixed point in mega-counts per second (Mcps).
+              // Stored in kilo-counts per second (kcps): Mcps * 1000.
+              uint16_t raw;
+              if (id(vl53_raw).read_byte_16(0x1A, &raw)) id(signal_sum) += raw / 128.0f * 1000.0f;
+              if (id(vl53_raw).read_byte_16(0x1C, &raw)) id(ambient_sum) += raw / 128.0f * 1000.0f;
             }
 
   - platform: template
@@ -281,6 +301,32 @@ sensor:
     update_interval: never
     entity_category: diagnostic
 
+  # How strongly the target reflects the sensor's laser. Low values mean a dark,
+  # angled or distant target and less reliable readings.
+  - platform: template
+    id: signal_strength
+    name: Signal Strength
+    icon: mdi:signal
+    unit_of_measurement: kcps
+    state_class: measurement
+    accuracy_decimals: 0
+    update_interval: never
+    entity_category: diagnostic
+    disabled_by_default: true
+
+  # Infrared (940 nm) ambient light seen by the sensor - not visible light, so
+  # not convertible to lux. Strong IR (sunlight, incandescent bulbs) adds noise
+  # and shortens the usable range.
+  - platform: template
+    id: ambient_ir
+    name: Ambient IR
+    icon: mdi:white-balance-sunny
+    unit_of_measurement: kcps
+    state_class: measurement
+    accuracy_decimals: 0
+    update_interval: never
+    entity_category: diagnostic
+
   - platform: template
     id: last_measurement
     name: Last Measurement
@@ -323,6 +369,13 @@ text_sensor:
     reset_reason:
       name: Last Restart Reason
       icon: mdi:restart-alert
+
+  # Plain-language version of Ambient IR, using the thresholds in substitutions.
+  - platform: template
+    id: ambient_ir_level
+    name: Ambient IR Level
+    icon: mdi:weather-sunny-alert
+    entity_category: diagnostic
 
   - platform: wifi_info
     ip_address:
@@ -430,6 +483,8 @@ script:
           id(sample_count) = 0;
           id(sample_min) = NAN;
           id(sample_max) = NAN;
+          id(signal_sum) = 0;
+          id(ambient_sum) = 0;
           id(reading_count) = 0;
           id(attempt_count) = 0;
           id(sensor_fault) = false;
@@ -480,6 +535,15 @@ script:
           id(sensor_problem).publish_state(id(sensor_fault));
           id(valid_samples).publish_state(id(sample_count));
           id(reading_spread).publish_state(id(sample_count) >= 2 ? id(sample_max) - id(sample_min) : NAN);
+          if (id(sample_count) > 0) {
+            const float signal = id(signal_sum) / id(sample_count);
+            const float ambient = id(ambient_sum) / id(sample_count);
+            id(signal_strength).publish_state(signal);
+            id(ambient_ir).publish_state(ambient);
+            id(ambient_ir_level).publish_state(ambient >= ${ambient_ir_high_kcps} ? "High"
+                                               : ambient >= ${ambient_ir_moderate_kcps} ? "Moderate" : "Low");
+            ESP_LOGI("measure", "Signal %.0f kcps, ambient IR %.0f kcps", signal, ambient);
+          }
           const auto now = id(ha_time).now();
           if (now.is_valid()) id(last_measurement).publish_state(now.timestamp);
       - component.update: percentage
