@@ -98,6 +98,15 @@ globals:
     type: int
     restore_value: no
     initial_value: '0'
+  # Sums of the VL53L0X's signal and ambient rates (MCPS) over valid samples.
+  - id: signal_sum
+    type: float
+    restore_value: no
+    initial_value: '0'
+  - id: ambient_sum
+    type: float
+    restore_value: no
+    initial_value: '0'
   - id: sample_min
     type: float
     restore_value: no
@@ -228,6 +237,12 @@ sensor:
               id(sample_count) += 1;
               if (std::isnan(id(sample_min)) || mm < id(sample_min)) id(sample_min) = mm;
               if (std::isnan(id(sample_max)) || mm > id(sample_max)) id(sample_max) = mm;
+              // The driver only reads the range, but the rest of the result block
+              // stays valid until the next reading: signal rate at 0x1A and ambient
+              // rate at 0x1C, both 9.7 fixed point in mega-counts per second.
+              uint16_t raw;
+              if (id(vl53_raw).read_byte_16(0x1A, &raw)) id(signal_sum) += raw / 128.0f;
+              if (id(vl53_raw).read_byte_16(0x1C, &raw)) id(ambient_sum) += raw / 128.0f;
             }
 
   - platform: template
@@ -278,6 +293,31 @@ sensor:
     device_class: distance
     state_class: measurement
     accuracy_decimals: 0
+    update_interval: never
+    entity_category: diagnostic
+
+  # How strongly the target reflects the sensor's laser. Low values mean a dark,
+  # angled or distant target and less reliable readings.
+  - platform: template
+    id: signal_strength
+    name: Signal Strength
+    icon: mdi:signal
+    unit_of_measurement: Mcps
+    state_class: measurement
+    accuracy_decimals: 2
+    update_interval: never
+    entity_category: diagnostic
+    disabled_by_default: true
+
+  # Infrared ambient light seen by the sensor. Strong light (sunlight) adds
+  # noise and shortens the usable range.
+  - platform: template
+    id: ambient_light
+    name: Ambient Light
+    icon: mdi:white-balance-sunny
+    unit_of_measurement: Mcps
+    state_class: measurement
+    accuracy_decimals: 2
     update_interval: never
     entity_category: diagnostic
 
@@ -430,6 +470,8 @@ script:
           id(sample_count) = 0;
           id(sample_min) = NAN;
           id(sample_max) = NAN;
+          id(signal_sum) = 0;
+          id(ambient_sum) = 0;
           id(reading_count) = 0;
           id(attempt_count) = 0;
           id(sensor_fault) = false;
@@ -480,6 +522,12 @@ script:
           id(sensor_problem).publish_state(id(sensor_fault));
           id(valid_samples).publish_state(id(sample_count));
           id(reading_spread).publish_state(id(sample_count) >= 2 ? id(sample_max) - id(sample_min) : NAN);
+          if (id(sample_count) > 0) {
+            id(signal_strength).publish_state(id(signal_sum) / id(sample_count));
+            id(ambient_light).publish_state(id(ambient_sum) / id(sample_count));
+            ESP_LOGI("measure", "Signal %.2f Mcps, ambient %.2f Mcps",
+                     id(signal_sum) / id(sample_count), id(ambient_sum) / id(sample_count));
+          }
           const auto now = id(ha_time).now();
           if (now.is_valid()) id(last_measurement).publish_state(now.timestamp);
       - component.update: percentage
