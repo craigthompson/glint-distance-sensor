@@ -37,5 +37,15 @@ ota:
 
 update:
   - platform: http_request
+    id: firmware_update
     name: Firmware
     source: https://craigthompson.github.io/glint-distance-sensor/firmware/glint-distance-sensor.manifest.json
+
+# Checks GitHub for new firmware now instead of waiting for the 6-hourly check.
+button:
+  - platform: template
+    name: Check for Firmware Update
+    icon: mdi:cloud-refresh
+    entity_category: diagnostic
+    on_press:
+      - component.update: firmware_update
