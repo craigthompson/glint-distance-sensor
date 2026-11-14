@@ -89,9 +89,25 @@ globals:
     type: int
     restore_value: no
     initial_value: '0'
-  - id: fail_count
+  # Readings the sensor reported during this measurement, valid or not
+  # (out of range counts). Zero means the sensor never answered.
+  - id: reading_count
     type: int
     restore_value: no
+    initial_value: '0'
+  - id: attempt_count
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: sensor_fault
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  # Sensor-reset reboots since the last good measurement. Kept across reboots
+  # so a dead or unplugged sensor can't cause a reboot loop.
+  - id: recovery_attempts
+    type: int
+    restore_value: yes
     initial_value: '0'
   - id: seconds_since_measure
     type: uint32_t
@@ -179,7 +195,9 @@ sensor:
       then:
         - lambda: |-
             // The vl53l0x component reports metres; everything else here is mm.
-            if (id(measuring) && !std::isnan(x) && x > 0) {
+            if (!id(measuring)) return;
+            id(reading_count) += 1;
+            if (!std::isnan(x) && x > 0) {
               id(sample_sum) += x * 1000.0f;
               id(sample_count) += 1;
             }
@@ -323,6 +341,9 @@ script:
           id(prev_effect) = id(status_led).get_effect_name();
           id(sample_sum) = 0;
           id(sample_count) = 0;
+          id(reading_count) = 0;
+          id(attempt_count) = 0;
+          id(sensor_fault) = false;
           id(measuring) = true;
       - if:
           condition:
@@ -331,25 +352,40 @@ script:
             - light.turn_on:
                 id: status_led
                 effect: Measuring
-      - repeat:
-          count: !lambda 'return (int) id(samples_per_measurement).state;'
+      # Near the edge of the sensor's range some samples come back out of range,
+      # so keep sampling until we have the requested number of valid samples,
+      # up to twice as many attempts.
+      - while:
+          condition:
+            lambda: |-
+              const int wanted = (int) id(samples_per_measurement).state;
+              return id(sample_count) < wanted && id(attempt_count) < wanted * 2;
           then:
+            - lambda: 'id(attempt_count) += 1;'
             - component.update: vl53_raw
             - delay: 200ms
       - lambda: |-
           id(measuring) = false;
           const int wanted = (int) id(samples_per_measurement).state;
-          const int needed = (wanted + 1) / 2;  // at least half the samples must be valid
+          const int needed = (wanted + 1) / 2;  // at least half the requested samples must be valid
           if (id(sample_count) >= needed && id(sample_count) > 0) {
-            id(distance).publish_state(id(sample_sum) / id(sample_count));
-            id(fail_count) = 0;
+            const float mm = id(sample_sum) / id(sample_count);
+            ESP_LOGI("measure", "Distance %.0f mm (%d valid samples in %d attempts)", mm, id(sample_count), id(attempt_count));
+            id(distance).publish_state(mm);
+            if (id(recovery_attempts) != 0) id(recovery_attempts) = 0;
           } else {
-            // Nothing in range is a normal result (publish unknown). Only count it
-            // as a fault when the sensor itself is erroring (I2C/timeout).
-            ESP_LOGW("measure", "Only %d of %d samples valid", id(sample_count), wanted);
             id(distance).publish_state(NAN);
-            if (id(vl53_raw).is_failed() || id(vl53_raw).status_has_warning()) {
-              id(fail_count) += 1;
+            // Nothing in range is a normal result: the sensor still completes its
+            // readings. It's a fault when the sensor failed setup, never answered,
+            // or the driver flagged a reading that never finished (stuck sensor).
+            const bool failed = id(vl53_raw).is_failed();
+            const bool stuck = id(vl53_raw).status_has_warning();
+            id(sensor_fault) = failed || stuck || id(reading_count) == 0;
+            if (id(sensor_fault)) {
+              ESP_LOGW("measure", "Sensor fault: %d valid samples in %d attempts, %d readings, failed=%d, stuck=%d",
+                       id(sample_count), id(attempt_count), id(reading_count), failed, stuck);
+            } else {
+              ESP_LOGI("measure", "Nothing in range (%d valid samples in %d attempts)", id(sample_count), id(attempt_count));
             }
           }
       - component.update: percentage
@@ -360,16 +396,31 @@ script:
             - light.turn_on:
                 id: status_led
                 effect: !lambda 'return id(prev_effect);'
-      # Sensor stuck? Reboot: setup drives XSHUT low then high, fully resetting the VL53L0X.
+      # Sensor fault: reset the VL53L0X and reboot so the driver sets it up from
+      # scratch. A software reboot alone leaves the sensor powered (and possibly
+      # stuck), so also send its I2C soft-reset command; with XSHUT wired
+      # (enable_pin), setup resets it in hardware as well. Gives up after 3
+      # tries without a good measurement, to avoid a reboot loop.
       - if:
           condition:
-            lambda: 'return id(fail_count) >= 3;'
+            lambda: 'return id(sensor_fault) && id(recovery_attempts) < 3;'
+          then:
+            - lambda: |-
+                id(recovery_attempts) += 1;
+                ESP_LOGW("measure", "Resetting sensor and rebooting (attempt %d of 3)", id(recovery_attempts));
+                global_preferences->sync();
+                id(vl53_raw).write_byte(0xBF, 0x00);  // SOFT_RESET_GO2_SOFT_RESET_N: enter reset
+            - delay: 10ms
+            - lambda: 'id(vl53_raw).write_byte(0xBF, 0x01);  // leave reset'
+            - delay: 500ms
+            - lambda: 'App.safe_reboot();'
+      - if:
+          condition:
+            lambda: 'return id(sensor_fault) && id(recovery_attempts) >= 3;'
           then:
             - logger.log:
-                level: WARN
-                format: "Sensor failed 3 measurements in a row, rebooting to reset it"
-            - delay: 1s
-            - lambda: 'App.safe_reboot();'
+                level: ERROR
+                format: "Sensor still not responding after 3 resets; check wiring or power-cycle the device"
 
 interval:
   - interval: 1s
