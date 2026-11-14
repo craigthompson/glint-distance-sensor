@@ -76,6 +76,11 @@ i2c:
   frequency: 400kHz
   scan: false
 
+# Clock from Home Assistant, for the Last Measurement timestamp.
+time:
+  - platform: homeassistant
+    id: ha_time
+
 globals:
   - id: measuring
     type: bool
@@ -89,6 +94,14 @@ globals:
     type: int
     restore_value: no
     initial_value: '0'
+  - id: sample_min
+    type: float
+    restore_value: no
+    initial_value: 'NAN'
+  - id: sample_max
+    type: float
+    restore_value: no
+    initial_value: 'NAN'
   # Readings the sensor reported during this measurement, valid or not
   # (out of range counts). Zero means the sensor never answered.
   - id: reading_count
@@ -163,6 +176,14 @@ light:
               duration: 100ms
 
 binary_sensor:
+  # On when the sensor stops responding (see the measure script); off after a
+  # successful measurement or a clean "nothing in range" result.
+  - platform: template
+    id: sensor_problem
+    name: Sensor Problem
+    device_class: problem
+    entity_category: diagnostic
+
   - platform: gpio
     id: boot_button
     name: Button
@@ -198,8 +219,11 @@ sensor:
             if (!id(measuring)) return;
             id(reading_count) += 1;
             if (!std::isnan(x) && x > 0) {
-              id(sample_sum) += x * 1000.0f;
+              const float mm = x * 1000.0f;
+              id(sample_sum) += mm;
               id(sample_count) += 1;
+              if (std::isnan(id(sample_min)) || mm < id(sample_min)) id(sample_min) = mm;
+              if (std::isnan(id(sample_max)) || mm > id(sample_max)) id(sample_max) = mm;
             }
 
   - platform: template
@@ -231,6 +255,35 @@ sensor:
       if (pct < 0.0f) pct = 0.0f;
       if (pct > 100.0f) pct = 100.0f;
       return pct;
+
+  # Measurement quality, published by the measure script.
+  - platform: template
+    id: valid_samples
+    name: Valid Samples
+    icon: mdi:check-circle-outline
+    state_class: measurement
+    accuracy_decimals: 0
+    update_interval: never
+    entity_category: diagnostic
+
+  - platform: template
+    id: reading_spread
+    name: Reading Spread
+    icon: mdi:arrow-expand-vertical
+    unit_of_measurement: mm
+    device_class: distance
+    state_class: measurement
+    accuracy_decimals: 0
+    update_interval: never
+    entity_category: diagnostic
+
+  - platform: template
+    id: last_measurement
+    name: Last Measurement
+    device_class: timestamp
+    accuracy_decimals: 0
+    update_interval: never
+    entity_category: diagnostic
 
   - platform: wifi_signal
     name: Wi-Fi Signal
@@ -341,6 +394,8 @@ script:
           id(prev_effect) = id(status_led).get_effect_name();
           id(sample_sum) = 0;
           id(sample_count) = 0;
+          id(sample_min) = NAN;
+          id(sample_max) = NAN;
           id(reading_count) = 0;
           id(attempt_count) = 0;
           id(sensor_fault) = false;
@@ -388,6 +443,11 @@ script:
               ESP_LOGI("measure", "Nothing in range (%d valid samples in %d attempts)", id(sample_count), id(attempt_count));
             }
           }
+          id(sensor_problem).publish_state(id(sensor_fault));
+          id(valid_samples).publish_state(id(sample_count));
+          id(reading_spread).publish_state(id(sample_count) >= 2 ? id(sample_max) - id(sample_min) : NAN);
+          const auto now = id(ha_time).now();
+          if (now.is_valid()) id(last_measurement).publish_state(now.timestamp);
       - component.update: percentage
       - if:
           condition:
