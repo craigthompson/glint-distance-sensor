@@ -18,7 +18,7 @@ Plug the sensor into this computer with a USB **data** cable, then click the but
 
 After installing, the installer offers to connect the sensor to your Wi-Fi.
 
-<script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
+<script type="module" src="esp-web-tools/install-button.js"></script>
 
 ## Connect to Wi-Fi
 
