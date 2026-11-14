@@ -14,7 +14,7 @@ Measurements run every 30 minutes by default; you can change the interval, the n
 
 Plug the sensor into this computer with a USB **data** cable, then click the button. Works in Chrome or Edge on a computer.
 
-<esp-web-install-button manifest="firmware/glint-distance-sensor.manifest.json"></esp-web-install-button>
+<div class="install"><esp-web-install-button manifest="firmware/glint-distance-sensor.manifest.json"><div slot="unsupported" class="note">This browser can't install firmware over USB. Open this page in Chrome or Edge on a computer.</div><div slot="not-allowed" class="note">Installing over USB needs a secure connection. Open this page using https://.</div></esp-web-install-button></div>
 
 After installing, the installer offers to connect the sensor to your Wi-Fi.
 
@@ -38,7 +38,7 @@ Then set **0% Distance** and **100% Distance** on the device page if you want a 
 
 ## Updates
 
-New firmware appears in Home Assistant as an update for the sensor's **Firmware** entity. Install it like any other update.
+New firmware appears in Home Assistant as an update for the sensor's **Firmware** entity. Install it like any other update. The sensor checks every 6 hours; press **Check for Firmware Update** on its device page to check right away.
 
 ## Buttons
 
@@ -50,4 +50,3 @@ New firmware appears in Home Assistant as an update for the sensor's **Firmware*
 
 Use the ESPHome dashboard? Discovered sensors show **Take Control**, which adds an editable configuration to your dashboard. After that, you build and update the firmware yourself, and it no longer receives updates from this project.
 
-[Source code on GitHub](https://github.com/craigthompson/glint-distance-sensor)
