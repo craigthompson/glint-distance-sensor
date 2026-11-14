@@ -76,6 +76,10 @@ i2c:
   frequency: 400kHz
   scan: false
 
+# Restart reason, free memory and loop time diagnostics.
+debug:
+  update_interval: 5min
+
 # Clock from Home Assistant, for the Last Measurement timestamp.
 time:
   - platform: homeassistant
@@ -295,11 +299,41 @@ sensor:
     update_interval: 60s
     entity_category: diagnostic
 
+  # Temperature of the ESP32-C3 chip itself, not the room.
+  - platform: internal_temperature
+    name: Chip Temperature
+    update_interval: 5min
+    entity_category: diagnostic
+
+  - platform: debug
+    free:
+      name: Free Memory
+      disabled_by_default: true
+    loop_time:
+      name: Loop Time
+      disabled_by_default: true
+
 text_sensor:
   - platform: version
     name: Firmware Version
     hide_timestamp: true
     entity_category: diagnostic
+
+  - platform: debug
+    reset_reason:
+      name: Last Restart Reason
+      icon: mdi:restart-alert
+
+  - platform: wifi_info
+    ip_address:
+      name: IP Address
+      disabled_by_default: true
+    ssid:
+      name: Wi-Fi Network
+      disabled_by_default: true
+    bssid:
+      name: Access Point
+      disabled_by_default: true
 
 number:
   - platform: template
