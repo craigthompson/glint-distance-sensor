@@ -47,6 +47,31 @@
   --md-sys-color-shadow: #000;
   --mdc-theme-primary: var(--accent-soft);
 }
+/* ESP Web Tools' pop-ups (install / Wi-Fi / logs, and "No port selected") set a
+   light palette on their own :host, which wins over the inherited values above.
+   Page styles on the host element itself take precedence over :host, so set
+   the dark palette here too. */
+ewt-install-dialog,
+ewt-no-port-picked-dialog {
+  --text-color: rgba(232, 237, 243, .78);
+  --danger-color: #ff8a80;
+  --md-sys-color-primary: var(--accent-soft);
+  --md-sys-color-on-primary: #00315f;
+  --md-sys-color-surface: var(--card-raised);
+  --md-sys-color-surface-container: var(--card-raised);
+  --md-sys-color-surface-container-high: var(--card-raised);
+  --md-sys-color-surface-container-highest: #2c3540;
+  --md-sys-color-secondary-container: #2a3a50;
+  --md-sys-color-on-secondary-container: #d6e3ff;
+  --md-sys-color-on-surface: var(--text);
+  --md-sys-color-on-surface-variant: var(--muted);
+  --md-sys-color-outline: #5b6673;
+  --md-sys-color-outline-variant: var(--line);
+  --md-dialog-container-color: var(--card-raised);
+  --md-dialog-headline-color: var(--text);
+  --md-dialog-supporting-text-color: rgba(232, 237, 243, .78);
+  color-scheme: dark;
+}
 * { box-sizing: border-box; }
 html { background: var(--bg); }
 body {
