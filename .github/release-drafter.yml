@@ -1,12 +1,30 @@
 name-template: "$RESOLVED_VERSION"
 tag-template: "$RESOLVED_VERSION"
+# These notes are what users read in Home Assistant's update dialog, so every
+# change goes through a pull request with a plain-language title and one label:
+#   enhancement -> New Features, bug -> Bug Fixes, breaking-change -> Breaking Changes,
+#   documentation / maintenance / dependencies -> collapsed sections,
+#   skip-changelog -> left out.
 categories:
   - title: "Breaking Changes"
     label: "breaking-change"
-  - title: "Dependencies"
+  - title: "New Features"
+    label: "enhancement"
+  - title: "Bug Fixes"
+    label: "bug"
+  - title: "Documentation"
+    collapse-after: 3
+    label: "documentation"
+  - title: "Maintenance"
     collapse-after: 1
     labels:
+      - "maintenance"
       - "dependencies"
+      - "github_actions"
+exclude-labels:
+  - "skip-changelog"
+change-template: "- $TITLE (#$NUMBER)"
+no-changes-template: "- Internal changes only"
 
 # Version is calculated externally (calver YY.M.N) and passed in as an input,
 # so the version-resolver here is unused. The workflow overrides
