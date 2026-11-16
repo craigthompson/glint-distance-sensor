@@ -12,7 +12,7 @@
 #   VL53L0X SCL   -> IO6
 #   VL53L0X SDA   -> IO7
 #   VL53L0X XSHUT -> IO5   (hardware reset/enable; the GPIO1 interrupt pin is not used)
-#   Onboard LED   =  IO8   (active low)
+#   Onboard LED   =  IO8   (active low; status patterns, see the LED interval)
 #   BOOT button   =  IO9   (hold 10 s for factory reset)
 
 substitutions:
@@ -63,6 +63,7 @@ esphome:
             uint8_t count = 0;
             pref.save(&count);
             global_preferences->sync();
+            id(power_cycles) = 0;
 
 esp32:
   board: esp32-c3-devkitm-1
@@ -96,6 +97,10 @@ api:
 
 ota:
   - platform: esphome
+    on_begin:
+      - lambda: 'id(updating) = true; id(led_output).set_level(1.0f);'
+    on_error:
+      - lambda: 'id(updating) = false;'
 
 wifi:
   # The device runs on USB power, so keep the radio awake. ESPHome's default on
@@ -186,6 +191,16 @@ globals:
     type: bool
     restore_value: no
     initial_value: 'false'
+  # Brightness the Status LED light asks for; the LED interval shows it unless
+  # a status pattern takes over.
+  - id: user_led_level
+    type: float
+    restore_value: no
+    initial_value: '0'
+  - id: updating
+    type: bool
+    restore_value: no
+    initial_value: 'false'
   - id: prev_effect
     type: std::string
     restore_value: no
@@ -196,12 +211,18 @@ output:
     id: led_output
     pin: GPIO8
     inverted: true
+  # The Status LED light drives this; the LED interval passes it on to the LED.
+  - platform: template
+    id: user_led_output
+    type: float
+    write_action:
+      - lambda: 'id(user_led_level) = state;'
 
 light:
   - platform: monochromatic
     id: status_led
     name: Status LED
-    output: led_output
+    output: user_led_output
     entity_category: config
     restore_mode: RESTORE_DEFAULT_ON
     default_transition_length: 0s
@@ -620,6 +641,43 @@ script:
                 format: "Sensor still not responding after 3 resets; check wiring or power-cycle the device"
 
 interval:
+  # Status LED. Important states take over the LED with their own pattern;
+  # otherwise it shows the Status LED light as set in Home Assistant.
+  #   Firmware update           solid on
+  #   Factory reset counting    very fast flicker (power cycles 2-4 of 5)
+  #   Needs Wi-Fi setup         slow blink, 1 s on / 1 s off
+  #   Connecting to Wi-Fi       fast blink
+  #   Not connected to HA       2 blinks, pause   (only while the LED is on)
+  #   Sensor problem            3 blinks, pause   (only while the LED is on)
+  #   Normal                    the Status LED light: breathing, flashing while measuring
+  - interval: 20ms
+    then:
+      - lambda: |-
+          if (id(updating)) return;  // left solid on by ota on_begin
+          const uint32_t t = millis();
+          // n short blinks, then a pause, repeating every `period` ms
+          auto blinks = [t](uint32_t n, uint32_t period) {
+            const uint32_t p = t % period;
+            return p < n * 300 && p % 300 < 150;
+          };
+          const bool led_on = id(status_led).current_values.is_on();
+          bool on;
+          if (id(power_cycles) >= 2) {
+            on = t % 100 < 50;
+          } else if (!wifi::global_wifi_component->has_sta()) {
+            on = t % 2000 < 1000;
+          } else if (!wifi::global_wifi_component->is_connected()) {
+            on = t % 250 < 125;
+          } else if (led_on && !api::global_api_server->is_connected()) {
+            on = blinks(2, 2000);
+          } else if (led_on && id(sensor_problem).state) {
+            on = blinks(3, 2500);
+          } else {
+            id(led_output).set_level(id(user_led_level));
+            return;
+          }
+          id(led_output).set_level(on ? 1.0f : 0.0f);
+
   - interval: 1s
     then:
       - lambda: 'id(seconds_since_measure) += 1;'
