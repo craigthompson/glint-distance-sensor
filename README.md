@@ -2,7 +2,9 @@
 
 A general-purpose Wi-Fi distance sensor for Home Assistant, built on ESPHome: an ESP32-C3 Super Mini and a VL53L0X time-of-flight sensor.
 
-**Install, set up and update:** https://craigthompson.github.io/glint-distance-sensor/
+**Quick start (set up a new sensor):** https://craigthompson.github.io/glint-distance-sensor/setup/
+
+**Install firmware:** https://craigthompson.github.io/glint-distance-sensor/
 
 ## Features
 
