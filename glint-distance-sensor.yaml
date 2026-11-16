@@ -13,7 +13,7 @@
 #   VL53L0X SDA   -> IO7
 #   VL53L0X XSHUT -> IO5   (hardware reset/enable; the GPIO1 interrupt pin is not used)
 #   Onboard LED   =  IO8   (active low)
-#   BOOT button   =  IO9   (Improv authorization; hold 10 s for factory reset)
+#   BOOT button   =  IO9   (hold 10 s for factory reset)
 
 substitutions:
   device_name: glint-distance-sensor
@@ -28,11 +28,41 @@ esphome:
   friendly_name: ${friendly_name}
   name_add_mac_suffix: true
   on_boot:
-    priority: -100
-    then:
-      - light.turn_on:
-          id: status_led
-          effect: Breathe
+    # Factory reset without opening the case: unplug and replug 5 times in a
+    # row, each within 10 s of plugging in. Counts power-on boots only, so
+    # updates, restarts and crashes never trigger it. Saved straight to flash
+    # because power can be cut again within seconds.
+    - priority: 600
+      then:
+        - lambda: |-
+            auto pref = global_preferences->make_preference<uint8_t>(fnv1_hash("glint_power_cycles"));
+            uint8_t count = 0;
+            if (!pref.load(&count)) count = 0;
+            count = esp_reset_reason() == ESP_RST_POWERON ? count + 1 : 0;
+            pref.save(&count);
+            global_preferences->sync();
+            id(power_cycles) = count;
+            if (count > 1) ESP_LOGW("reset", "Quick power cycle %u of 5", count);
+    - priority: -100
+      then:
+        - if:
+            condition:
+              lambda: 'return id(power_cycles) >= 5;'
+            then:
+              - logger.log:
+                  level: WARN
+                  tag: reset
+                  format: "5 quick power cycles: factory reset"
+              - button.press: factory_reset_button
+        - light.turn_on:
+            id: status_led
+            effect: Breathe
+        - delay: 10s
+        - lambda: |-
+            auto pref = global_preferences->make_preference<uint8_t>(fnv1_hash("glint_power_cycles"));
+            uint8_t count = 0;
+            pref.save(&count);
+            global_preferences->sync();
 
 esp32:
   board: esp32-c3-devkitm-1
@@ -94,6 +124,11 @@ time:
     id: ha_time
 
 globals:
+  # Quick power cycles counted at boot (see esphome: on_boot).
+  - id: power_cycles
+    type: uint8_t
+    initial_value: '0'
+
   - id: measuring
     type: bool
     restore_value: no

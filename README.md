@@ -10,7 +10,7 @@ A general-purpose Wi-Fi distance sensor for Home Assistant, built on ESPHome: an
 - Optional percentage mapped between a user-set 0% and 100% distance
 - Adjustable measurement interval (5 s – 24 h, default 30 min) and a **Measure Now** button
 - Status LED breathes while idle and flashes while measuring; dimmable or off from Home Assistant
-- No Wi-Fi credentials or keys in the firmware. Onboarding over Improv BLE (with BOOT-button authorization), a branded captive portal, or Improv Serial
+- No Wi-Fi credentials or keys in the firmware. Onboarding over Improv BLE (no button press needed), a branded captive portal, or Improv Serial
 - Firmware updates delivered to Home Assistant from GitHub releases
 - Measurement-quality, device-health and Wi-Fi diagnostics (see below)
 
@@ -68,7 +68,7 @@ Also published after every measurement.
 | Samples per Measurement | Number | Enabled | Valid samples averaged per measurement: 1–10, default 5. |
 | Status LED | Light | Enabled | Breathes while idle and flashes while measuring. Turn it off or dim it here; picking the **None** effect makes it light steadily. |
 | Restart | Button | Enabled | Restarts the device. |
-| Factory Reset | Button | Disabled | Forgets Wi-Fi and all settings, same as holding BOOT for 10 s. |
+| Factory Reset | Button | Disabled | Forgets Wi-Fi and all settings, same as 5 quick power cycles or holding BOOT for 10 s. |
 | Firmware | Update | Enabled | Shows and installs new releases. Checks every 6 hours and at boot. *Factory firmware only.* |
 | Check for Firmware Update | Button | Enabled | Checks for a new release right away. *Factory firmware only.* |
 
@@ -84,7 +84,9 @@ Devices taken over in the ESPHome dashboard (**Take Control**) build their own f
 | SDA | IO7 |
 | XSHUT | IO5 |
 
-Onboard LED: IO8 (active low). BOOT button: IO9.
+Onboard LED: IO8 (active low). BOOT button: IO9 (optional; hold 10 s for factory reset).
+
+**Factory reset without opening the case:** unplug and replug the sensor 5 times in a row, plugging it back in within 10 s each time. Only power-on boots count, so updates, restarts and crashes never trigger it.
 
 XSHUT is required. At every boot (power-up, firmware update, **Restart**, or a crash) the firmware pulls XSHUT low to reset the sensor in hardware. Without it, a software restart can leave the still-powered VL53L0X stuck reporting "out of range" until it's unplugged. Leave the sensor's GPIO1 pin unconnected.
 
