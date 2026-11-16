@@ -133,6 +133,7 @@ td { color: #cfd7e1; }
 .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 20px 0 8px; }
 .stats div { background: var(--card-raised); border: 1px solid var(--line); border-radius: 12px; padding: 14px 10px; text-align: center; }
 .stats strong { display: block; font-size: 1.5rem; line-height: 1.2; color: var(--accent-soft); letter-spacing: -.01em; }
+.stats small { font-size: .55em; font-weight: 500; color: var(--muted); margin-left: 2px; letter-spacing: 0; white-space: nowrap; }
 .stats span { display: block; color: var(--muted); font-size: .85rem; margin-top: 2px; }
 /* Two-column spec tables: no header row; the first column names the spec. */
 table.spec thead { display: none; }
@@ -156,9 +157,9 @@ footer a { color: var(--muted); text-decoration: underline; }
     <h1>{{ page.heading | default: site.title }}</h1>
     <p>{{ page.tagline | default: site.description }}</p>
     <nav class="tabs">
+      <a href="{{ site.baseurl }}/specs/"{% if page.url == "/specs/" %} aria-current="page"{% endif %}>Specifications</a>
       <a href="{{ site.baseurl }}/"{% if page.url == "/" %} aria-current="page"{% endif %}>Quick start</a>
       <a href="{{ site.baseurl }}/firmware/"{% if page.url == "/firmware/" %} aria-current="page"{% endif %}>Install firmware</a>
-      <a href="{{ site.baseurl }}/specs/"{% if page.url == "/specs/" %} aria-current="page"{% endif %}>Specifications</a>
     </nav>
   </header>
   <main class="card">
