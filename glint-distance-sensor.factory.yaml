@@ -34,6 +34,10 @@ http_request:
 
 ota:
   - platform: http_request
+    on_begin:
+      - lambda: 'id(updating) = true; id(led_output).set_level(1.0f);'
+    on_error:
+      - lambda: 'id(updating) = false;'
 
 update:
   - platform: http_request
