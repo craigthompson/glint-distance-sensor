@@ -6,7 +6,7 @@ tagline: Set up your sensor in a couple of minutes
 
 # Quick start
 
-A Wi-Fi distance sensor for [Home Assistant](https://www.home-assistant.io/): salt and water tank levels, bins, parking, or anything else where knowing a distance up to about 2 m is useful. This guide takes you from unboxing to readings in Home Assistant. Building your own, or reinstalling? See [Install firmware]({{ site.baseurl }}/firmware/).
+A Wi-Fi distance sensor for [Home Assistant](https://www.home-assistant.io/): salt and water tank levels, bins, parking, or anything else where knowing a distance up to about 2 m is useful. This guide takes you from unboxing to readings in Home Assistant. Building your own, or reinstalling? See [Install firmware]({{ site.baseurl }}/firmware/). For range, precision and everything it can do, see [Features & specifications]({{ site.baseurl }}/specs/).
 
 ## What you need
 
