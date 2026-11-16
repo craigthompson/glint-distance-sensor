@@ -32,13 +32,27 @@ The sensor only supports 2.4 GHz Wi-Fi.
 
 ## Add to Home Assistant
 
-Once the sensor is on your Wi-Fi, Home Assistant discovers it: go to **Settings → Devices & services**, find **ESPHome**, and click **Add**.
+Once the sensor is on your Wi-Fi, its light blinks twice and pauses, and Home Assistant discovers it: go to **Settings → Devices & services**, find **ESPHome**, and click **Add**.
 
-Then set **0% Distance** and **100% Distance** on the device page if you want a percentage.
+When it's added, the light starts breathing slowly. Then set **0% Distance** and **100% Distance** on the device page if you want a percentage.
 
 ## Updates
 
 New firmware appears in Home Assistant as an update for the sensor's **Firmware** entity. Install it like any other update. The sensor checks every 6 hours; press **Check for Firmware Update** on its device page to check right away.
+
+## Status light
+
+| Light | Meaning |
+|---|---|
+| Slow blink (1 s on, 1 s off) | Needs Wi-Fi setup. Set it up over Bluetooth, the setup hotspot or USB. |
+| Fast blink | Connecting to Wi-Fi. If it doesn't stop, the network is out of range or its password changed. |
+| 2 blinks, pause | On Wi-Fi but not connected to Home Assistant. Add it in Home Assistant, or check that Home Assistant is running. |
+| 3 blinks, pause | Sensor problem: the distance sensor isn't responding. |
+| Very fast flicker | Counting quick power cycles for a factory reset. |
+| Solid on | Installing a firmware update. Don't unplug it. |
+| Slow breathing | Working normally. It flashes briefly while measuring. |
+
+If you turn the **Status LED** off or dim it in Home Assistant, it stays off except for setup, Wi-Fi and update patterns, which always show.
 
 ## Factory reset
 

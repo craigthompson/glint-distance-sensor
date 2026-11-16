@@ -66,7 +66,7 @@ Also published after every measurement.
 | 0% Distance / 100% Distance | Number (mm) | Enabled | The ends of the **Percentage** range. Default 0, meaning unset. |
 | Measurement Interval | Number (s) | Enabled | Time between automatic measurements: 5 s to 24 h, default 1800 s (30 min). |
 | Samples per Measurement | Number | Enabled | Valid samples averaged per measurement: 1–10, default 5. |
-| Status LED | Light | Enabled | Breathes while idle and flashes while measuring. Turn it off or dim it here; picking the **None** effect makes it light steadily. |
+| Status LED | Light | Enabled | Breathes while idle and flashes while measuring. Turn it off or dim it here; picking the **None** effect makes it light steadily. Status patterns (see [Status light](#status-light)) take over when needed. |
 | Restart | Button | Enabled | Restarts the device. |
 | Factory Reset | Button | Disabled | Forgets Wi-Fi and all settings, same as 5 quick power cycles or holding BOOT for 10 s. |
 | Firmware | Update | Enabled | Shows and installs new releases. Checks every 6 hours and at boot. *Factory firmware only.* |
@@ -89,6 +89,20 @@ Onboard LED: IO8 (active low). BOOT button: IO9 (optional; hold 10 s for factory
 **Factory reset without opening the case:** unplug and replug the sensor 5 times in a row, plugging it back in within 10 s each time. Only power-on boots count, so updates, restarts and crashes never trigger it.
 
 XSHUT is required. At every boot (power-up, firmware update, **Restart**, or a crash) the firmware pulls XSHUT low to reset the sensor in hardware. Without it, a software restart can leave the still-powered VL53L0X stuck reporting "out of range" until it's unplugged. Leave the sensor's GPIO1 pin unconnected.
+
+## Status light
+
+| Light | Meaning |
+|---|---|
+| Slow blink (1 s on, 1 s off) | Needs Wi-Fi setup. Set it up over Bluetooth, the setup hotspot or USB. |
+| Fast blink | Connecting to Wi-Fi. If it doesn't stop, the network is out of range or its password changed. |
+| 2 blinks, pause | On Wi-Fi but not connected to Home Assistant. Add it in Home Assistant, or check that Home Assistant is running. |
+| 3 blinks, pause | Sensor problem: the distance sensor isn't responding. |
+| Very fast flicker | Counting quick power cycles for a factory reset. |
+| Solid on | Installing a firmware update. Don't unplug it. |
+| Slow breathing | Working normally. It flashes briefly while measuring. |
+
+Turning the **Status LED** off in Home Assistant hides the breathing, the measuring flash and the Home Assistant and sensor-problem patterns. Setup, Wi-Fi, factory-reset and update patterns always show, because the device can't report those to Home Assistant.
 
 ## Repository layout
 
