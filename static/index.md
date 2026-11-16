@@ -41,9 +41,10 @@ Nothing to install: ESPHome support is built into Home Assistant. You don't need
 
 ## 4. Mount it
 
-The sensor measures the distance to whatever is straight in front of the small dark window on its front, up to about **2 metres**.
+The sensor measures the distance to whatever is straight in front of the small dark window on its front, up to about **2 metres** (6.6 ft) for light-coloured surfaces and about 80 cm (31 in) for dark ones. Anything farther away reads as out of range, so Distance shows Unknown.
 
 - **Point it straight at the surface** you want to measure. For a tank or bin, mount it under the lid looking down.
+- **Remove any protective film** from the window, and don't put anything over it, not even clear plastic.
 - **Keep the path clear.** Walls, pipes or the edge of a narrow opening in the way give wrong readings.
 - **Avoid direct sunlight** on the sensor or the target. Strong sunlight shortens the range and adds noise.
 - Dark, shiny or angled surfaces reflect less light, so the range is shorter.
@@ -57,7 +58,7 @@ To check the position, press **Measure Now** on the sensor's device page and loo
 1. With the tank **empty**, press **Measure Now** and note the **Distance**. Enter it as **0% Distance**.
 2. With the tank **full**, do the same and enter the reading as **100% Distance**.
 
-It works either way round: full can be the shorter or the longer distance.
+It works either way round: full can be the shorter or the longer distance. Both settings take 0 to 2000 mm; 0 means not set, and **Percentage** stays Unknown until both are set. Readings beyond either end show as 0% or 100%.
 
 ## 6. Adjust it to your needs
 
@@ -71,7 +72,7 @@ All on the sensor's device page in Home Assistant:
 | **Status LED** | Turn the light off or dim it. Picking the **None** effect makes it light steadily. |
 | **Measure Now** | Measures right away. |
 
-**Sensor Problem** turns on if the sensor stops responding, which makes it a good trigger for a "needs attention" notification.
+**Measurement Result** tells you how the last measurement went: **OK**, **Nothing in range**, or **Sensor not responding**. **Sensor Problem** turns on if the sensor stops responding, which makes it a good trigger for a "needs attention" notification.
 
 ## Extend Bluetooth range (optional)
 
@@ -123,11 +124,27 @@ It found the sensor but couldn't reach it. Leave the address it filled in, wait 
 
 ### Distance shows Unknown
 
-**Measurement Result** says why. If it's **Nothing in range**, the sensor works but sees no target it can measure: the target is more than about 2 m away, or is very dark or at a steep angle. Move the sensor closer or point it straight at the surface, then press **Measure Now**.
+Right after the sensor starts, Distance is Unknown until the first measurement, a few seconds later. If it stays Unknown, **Measurement Result** says why.
+
+**Nothing in range** means the sensor is working but can't measure what it sees:
+
+- The target is too far: more than about 2 m (6.6 ft), or 80 cm (31 in) if it's dark. A sensor lying on a desk or floor pointing at the ceiling is usually out of range.
+- The target is very dark, shiny or at a steep angle.
+- Something is covering the window, like protective film or tape, or the target is closer than about 3 cm (1.2 in).
+
+To check, hold your hand about 30 cm (1 ft) in front of the sensor and press **Measure Now**. If Distance shows a value, the sensor is fine: move it closer to the target or point it straight at the surface.
+
+**Signal Strength** helps tell these apart. It's hidden by default: on the sensor's device page, under **Diagnostic**, click **+1 entity not shown**, open **Signal Strength**, and enable it in its settings. A strong signal means something reflects the laser but is out of range or too close; a weak one means there's nothing in view.
+
+**Sensor not responding** means the distance sensor itself isn't answering; see below.
+
+### Percentage shows Unknown
+
+Set both **0% Distance** and **100% Distance** to different values (see [Show a percentage](#5-show-a-percentage-optional)). It's also Unknown while Distance is Unknown.
 
 ### Sensor Problem is on
 
-The sensor restarts its distance sensor by itself up to three times. If the problem stays, unplug the sensor for a few seconds and plug it back in.
+Measurement Result shows **Sensor not responding**, and the light blinks three times and pauses. The sensor resets its distance sensor and restarts by itself, up to three times. If the problem stays, unplug the sensor for a few seconds and plug it back in. If it still doesn't recover, the distance sensor may be damaged or loose inside.
 
 ## Factory reset
 
