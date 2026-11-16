@@ -8,7 +8,9 @@ packages:
 
 esphome:
   project:
-    name: craigthompson.glint-distance-sensor
+    # Home Assistant shows the part before the dot as the manufacturer ("by ...")
+    # and the part after it as the model.
+    name: Craig Thompson.Glint Distance Sensor
     version: dev  # replaced with the release version by the GitHub workflow
 
 # Lets the ESPHome dashboard offer "Take Control" for discovered units.
