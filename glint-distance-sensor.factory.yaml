@@ -28,6 +28,51 @@ esp32_ble:
 improv_ble:
   authorizer: none
 
+# Optional Bluetooth proxy, off by default (Bluetooth Proxy switch below).
+# Scanning shares the radio with Wi-Fi, so it only runs while the switch is on.
+esp32_ble_tracker:
+  id: ble_tracker
+  scan_parameters:
+    continuous: false
+
+bluetooth_proxy:
+  active: true
+
+switch:
+  - platform: template
+    id: bt_proxy
+    name: Bluetooth Proxy
+    icon: mdi:bluetooth
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+    # With continuous scanning set, the tracker starts scanning by itself once
+    # Bluetooth is up, which also covers restoring the switch at boot. Uses
+    # id(ble_tracker): the switch restores before the tracker has set itself up.
+    on_turn_on:
+      - lambda: |-
+          auto *tracker = id(ble_tracker);
+          tracker->set_scan_continuous(true);
+          auto *ble = esp32_ble::global_ble;  // null until esp32_ble has set itself up
+          if (ble != nullptr && ble->is_active()) tracker->start_scan_if_idle();
+    on_turn_off:
+      - lambda: |-
+          auto *tracker = id(ble_tracker);
+          tracker->set_scan_continuous(false);
+          if (tracker->scan_running()) tracker->stop_scan();
+
+interval:
+  # Home Assistant can change the scanner mode, which restarts scanning; keep
+  # it stopped while the proxy is switched off.
+  - interval: 10s
+    then:
+      - lambda: |-
+          auto *tracker = id(ble_tracker);
+          if (!id(bt_proxy).state && tracker->scan_running()) {
+            tracker->set_scan_continuous(false);
+            tracker->stop_scan();
+          }
+
 # Wi-Fi onboarding over USB from the web installer.
 improv_serial:
 

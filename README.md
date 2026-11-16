@@ -15,6 +15,7 @@ A general-purpose Wi-Fi distance sensor for Home Assistant, built on ESPHome: an
 - No Wi-Fi credentials or keys in the firmware. Onboarding over Improv BLE (no button press needed), a branded captive portal, or Improv Serial
 - Firmware updates delivered to Home Assistant from GitHub releases
 - Measurement-quality, device-health and Wi-Fi diagnostics (see below)
+- Optional Bluetooth proxy, off by default, to extend Home Assistant's Bluetooth range and tracking
 
 ## Home Assistant entities
 
@@ -74,8 +75,9 @@ Also published after every measurement.
 | Factory Reset | Button | Disabled | Forgets Wi-Fi and all settings, same as 5 quick power cycles or holding BOOT for 10 s. |
 | Firmware | Update | Enabled | Shows and installs new releases. Checks every 6 hours and at boot. *Factory firmware only.* |
 | Check for Firmware Update | Button | Enabled | Checks for a new release right away. *Factory firmware only.* |
+| Bluetooth Proxy | Switch | Enabled | Off by default. When on, the sensor also works as an ESPHome Bluetooth proxy (see below). Remembered across restarts. *Factory firmware only.* |
 
-Devices taken over in the ESPHome dashboard (**Take Control**) build their own firmware, so they don't have the two *factory firmware only* entities.
+Devices taken over in the ESPHome dashboard (**Take Control**) build their own firmware, so they don't have the *factory firmware only* entities.
 
 ## Hardware
 
@@ -92,6 +94,14 @@ Onboard LED: IO8 (active low). BOOT button: IO9 (optional; hold 10 s for factory
 **Factory reset without opening the case:** unplug and replug the sensor 5 times in a row, plugging it back in within 10 s each time. Only power-on boots count, so updates, restarts and crashes never trigger it.
 
 XSHUT is required. At every boot (power-up, firmware update, **Restart**, or a crash) the firmware pulls XSHUT low to reset the sensor in hardware. Without it, a software restart can leave the still-powered VL53L0X stuck reporting "out of range" until it's unplugged. Leave the sensor's GPIO1 pin unconnected.
+
+## Bluetooth proxy
+
+Turning on **Bluetooth Proxy** makes the sensor an [ESPHome Bluetooth proxy](https://esphome.io/components/bluetooth_proxy/): it passes Bluetooth broadcasts to Home Assistant and can connect to Bluetooth devices for it (up to 3 at a time). Home Assistant adds it under **Settings → Devices & services → Bluetooth** automatically.
+
+Tracking uses Home Assistant's own Bluetooth integrations, with nothing extra on the sensor: **Private BLE Device** (phones and watches), **iBeacon Tracker**, or [Bermuda](https://github.com/agittins/bermuda) (HACS) for room-level presence from several proxies.
+
+Wi-Fi and Bluetooth share the ESP32-C3's radio. While the proxy is on, the sensor's Wi-Fi replies slow from about 10 ms to about 200–400 ms, and with a 1 s **Measurement Interval** some readings come 2 s apart. Measurements and Home Assistant keep working; if the sensor drops off Wi-Fi, turn the proxy off or move the sensor closer to the access point.
 
 ## Status light
 
