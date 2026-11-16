@@ -123,7 +123,7 @@ It found the sensor but couldn't reach it. Leave the address it filled in, wait 
 
 ### Distance shows Unknown
 
-Nothing is in range: the target is more than about 2 m away, or is very dark or at a steep angle. Move the sensor closer or point it straight at the surface, then press **Measure Now**.
+**Measurement Result** says why. If it's **Nothing in range**, the sensor works but sees no target it can measure: the target is more than about 2 m away, or is very dark or at a steep angle. Move the sensor closer or point it straight at the surface, then press **Measure Now**.
 
 ### Sensor Problem is on
 
