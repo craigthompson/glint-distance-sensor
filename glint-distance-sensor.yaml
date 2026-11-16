@@ -387,14 +387,6 @@ sensor:
     update_interval: never
     entity_category: diagnostic
 
-  - platform: template
-    id: last_measurement
-    name: Last Measurement
-    device_class: timestamp
-    accuracy_decimals: 0
-    update_interval: never
-    entity_category: diagnostic
-
   - platform: wifi_signal
     name: Wi-Fi Signal
     update_interval: 5min
@@ -420,6 +412,15 @@ sensor:
       disabled_by_default: true
 
 text_sensor:
+  # When the last measurement ran. Sent as ISO 8601 text: a numeric sensor is a
+  # 32-bit float, which rounds Unix timestamps to the nearest 128 s.
+  - platform: template
+    id: last_measurement
+    name: Last Measurement
+    device_class: timestamp
+    update_interval: never
+    entity_category: diagnostic
+
   - platform: version
     name: Firmware Version
     hide_timestamp: true
@@ -604,8 +605,8 @@ script:
                                                : ambient >= ${ambient_ir_moderate_kcps} ? "Moderate" : "Low");
             ESP_LOGI("measure", "Signal %.0f kcps, ambient IR %.0f kcps", signal, ambient);
           }
-          const auto now = id(ha_time).now();
-          if (now.is_valid()) id(last_measurement).publish_state(now.timestamp);
+          auto now = id(ha_time).utcnow();
+          if (now.is_valid()) id(last_measurement).publish_state(now.strftime("%Y-%m-%dT%H:%M:%SZ"));
       - component.update: percentage
       - if:
           condition:
