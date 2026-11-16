@@ -23,7 +23,7 @@ Plug the sensor into USB power. After a second the light starts **blinking slowl
 ## 2. Connect it to Wi-Fi
 
 1. On your phone, open Wi-Fi settings and join **Glint Distance Sensor Setup**. It has no password.
-2. A setup page opens by itself. If it doesn't, open a browser and go to `http://192.168.4.1`.
+2. A setup page usually opens by itself. If it doesn't, open your phone's web browser: the setup page should appear. If it still doesn't, go to `http://192.168.4.1`.
 3. Tap your network in the list and enter its password.
 
 The light **blinks fast** while it connects, then **blinks twice and pauses** once it's on your Wi-Fi. Your phone reconnects to your usual network by itself.
