@@ -1,7 +1,7 @@
 ---
 layout: default
 permalink: /
-tagline: Set up your sensor in about five minutes
+tagline: Set up your sensor in a couple of minutes
 ---
 
 # Quick start
