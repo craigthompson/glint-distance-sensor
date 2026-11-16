@@ -7,15 +7,15 @@ tagline: A precise, private, local distance sensor for Home Assistant
 
 # Features & specifications
 
-Glint Distance Sensor measures the distance to whatever it's pointed at, up to 2 m, with a laser time-of-flight sensor, and reports it to [Home Assistant](https://www.home-assistant.io/) over Wi-Fi. Use it for salt and tank levels, bin fill levels, parking position, or anything else where a distance tells you something useful.
+Glint Distance Sensor measures the distance to whatever it's pointed at, up to 2&nbsp;m (6.6&nbsp;ft), with a laser time-of-flight sensor, and reports it to [Home Assistant](https://www.home-assistant.io/) over Wi-Fi. Use it for salt and tank levels, bin fill levels, parking position, or anything else where a distance tells you something useful.
 
 <div class="stats">
-  <div><strong>2 m</strong><span>maximum range</span></div>
-  <div><strong>1 mm</strong><span>resolution</span></div>
-  <div><strong>±3 mm</strong><span>repeatability at 1.65 m</span></div>
-  <div><strong>1 s</strong><span>fastest update interval</span></div>
+  <div><strong>2&nbsp;m <small>6.6&nbsp;ft</small></strong><span>maximum range</span></div>
+  <div><strong>1&nbsp;mm <small>0.04&nbsp;in</small></strong><span>resolution</span></div>
+  <div><strong>±3&nbsp;mm <small>±⅛ in</small></strong><span>repeatability at 1.65&nbsp;m (5.4&nbsp;ft)</span></div>
+  <div><strong>1&nbsp;s</strong><span>fastest update interval</span></div>
   <div><strong>100%</strong><span>local, no cloud</span></div>
-  <div><strong>2 min</strong><span>setup, no app</span></div>
+  <div><strong>2&nbsp;min</strong><span>setup, no app</span></div>
 </div>
 
 ## Highlights
@@ -34,15 +34,15 @@ Glint Distance Sensor measures the distance to whatever it's pointed at, up to 2
 | | |
 |---|---|
 | Technology | Laser time-of-flight (STMicroelectronics VL53L0X), single-photon avalanche diode receiver |
-| Range | Up to 2 m indoors on light-coloured targets, about 80 cm on dark ones (see [Range by target](#range-by-target)) |
-| Resolution | 1 mm |
-| Repeatability | ±3 mm (1 standard deviation) at 1.65 m, 5-sample measurements, measured over 353 measurements |
-| Single-sample noise | About ±7 mm (1 standard deviation) at 1.65 m; averaging removes most of it |
+| Range | Up to 2&nbsp;m (6.6&nbsp;ft) indoors on light-coloured targets, about 80&nbsp;cm (31&nbsp;in) on dark ones (see [Range by target](#range-by-target)) |
+| Resolution | 1&nbsp;mm (0.04&nbsp;in) |
+| Repeatability | ±3&nbsp;mm (±0.12&nbsp;in, 1 standard deviation) at 1.65&nbsp;m (5.4&nbsp;ft), 5&#8209;sample measurements, measured over 353 measurements |
+| Single-sample noise | About ±7&nbsp;mm (±0.28&nbsp;in, 1 standard deviation) at 1.65&nbsp;m (5.4&nbsp;ft); averaging removes most of it |
 | Accuracy | Typically within 3% of the true distance (sensor datasheet) |
-| Field of view | 25° cone: a spot about 22 cm wide at 50 cm, 44 cm at 1 m, 89 cm at 2 m |
+| Field of view | 25° cone: a spot about 22&nbsp;cm (9&nbsp;in) wide at 50&nbsp;cm (20&nbsp;in), 44&nbsp;cm (17&nbsp;in) at 1&nbsp;m (3.3&nbsp;ft), and 89&nbsp;cm (35&nbsp;in) at 2&nbsp;m (6.6&nbsp;ft) |
 | Samples per measurement | 1–10, adjustable (default 5). Only valid samples are averaged, with up to twice as many attempts near the edge of range. |
-| Measurement time | About 35 ms per sample; 10 samples in about 0.6 s |
-| Update interval | 1 s to 24 h, adjustable (default 30 min), plus on demand with **Measure Now** |
+| Measurement time | About 35&nbsp;ms per sample; 10 samples in about 0.6&nbsp;s |
+| Update interval | 1&nbsp;s to 24&nbsp;h, adjustable (default 30&nbsp;min), plus on demand with **Measure Now** |
 | Light source | 940 nm infrared laser (VCSEL), invisible, Class 1 eye-safe (IEC 60825-1:2014) |
 {: .spec}
 
@@ -52,8 +52,8 @@ The maximum distance depends on how much light the target reflects and how much 
 
 | Target | Indoors | Outdoors, overcast |
 |---|---|---|
-| White or light-coloured (88% reflectance) | 2 m typical, 1.2 m minimum | 80 cm typical, 60 cm minimum |
-| Dark grey (17% reflectance) | 80 cm typical, 70 cm minimum | 50 cm typical, 40 cm minimum |
+| White or light-coloured (88% reflectance) | 2&nbsp;m (6.6&nbsp;ft) typical, 1.2&nbsp;m (3.9&nbsp;ft) minimum | 80&nbsp;cm (31&nbsp;in) typical, 60&nbsp;cm (24&nbsp;in) minimum |
+| Dark grey (17% reflectance) | 80&nbsp;cm (31&nbsp;in) typical, 70&nbsp;cm (28&nbsp;in) minimum | 50&nbsp;cm (20&nbsp;in) typical, 40&nbsp;cm (16&nbsp;in) minimum |
 
 Sunlight on the sensor or the target shortens the range and adds noise; LED and fluorescent lighting don't. The **Ambient IR** reading in Home Assistant tells you how much infrared light the sensor sees.
 
@@ -78,7 +78,7 @@ The [project README](https://github.com/craigthompson/glint-distance-sensor#home
 
 | | |
 |---|---|
-| Wi-Fi | 2.4 GHz 802.11 b/g/n. Power saving is off for fast, reliable replies (under 10 ms on a typical network). |
+| Wi-Fi | 2.4&nbsp;GHz 802.11 b/g/n. Power saving is off for fast, reliable replies (under 10&nbsp;ms on a typical network). |
 | Bluetooth | Bluetooth 5 LE, for Wi-Fi setup and the optional Bluetooth proxy |
 | Wi-Fi setup | Setup hotspot with a list of networks, Improv over Bluetooth from Home Assistant, or Improv over USB from a browser |
 | Bluetooth proxy | Optional, off by default. Passive and active scanning; up to 3 simultaneous connections for Home Assistant. |
@@ -88,11 +88,11 @@ The [project README](https://github.com/craigthompson/glint-distance-sensor#home
 
 | | |
 |---|---|
-| Controller | Espressif ESP32-C3, 32-bit RISC-V, 160 MHz, 4 MB flash |
-| Power | 5 V over USB-C, from any phone charger or USB port |
+| Controller | Espressif ESP32-C3, 32-bit RISC-V, 160&nbsp;MHz, 4&nbsp;MB flash |
+| Power | 5&nbsp;V over USB-C, from any phone charger or USB port |
 | Status light | One LED showing setup, Wi-Fi, Home Assistant, sensor and update status, with breathing and measuring patterns you can dim or turn off |
 | Reset | Unplug and replug 5 times to factory reset, no tools needed |
-| Operating temperature | −20 to 70 °C (distance sensor rating), indoor use |
+| Operating temperature | −20 to 70&nbsp;°C (−4 to 158&nbsp;°F), the distance sensor's rating; indoor use |
 {: .spec}
 
 ## Software
@@ -108,4 +108,4 @@ The [project README](https://github.com/craigthompson/glint-distance-sensor#home
 
 ## About these numbers
 
-Range, accuracy, field of view, light source and temperature come from the STMicroelectronics VL53L0X datasheet (DocID029104 Rev 2), tested at 23 °C on a target that fills the field of view. Repeatability and measurement time were measured on a Glint Distance Sensor pointed at a fixed target 1.65 m away indoors. Your results depend on the target, its angle and the light around it.
+Range, accuracy, field of view, light source and temperature come from the STMicroelectronics VL53L0X datasheet (DocID029104 Rev 2), tested at 23&nbsp;°C (73&nbsp;°F) on a target that fills the field of view. Repeatability and measurement time were measured on a Glint Distance Sensor pointed at a fixed target 1.65&nbsp;m (5.4&nbsp;ft) away indoors. Your results depend on the target, its angle and the light around it.
