@@ -22,11 +22,11 @@ After installing, the installer offers to connect the sensor to your Wi-Fi.
 
 ## Connect to Wi-Fi
 
-Use whichever is easiest:
+When the sensor's light blinks slowly, it's ready for Wi-Fi setup. Use whichever is easiest:
 
-1. **Home Assistant (Bluetooth).** If your Home Assistant has Bluetooth, it shows *Discovered: Improv via BLE*. Click **Add**, then choose your Wi-Fi network.
-2. **Setup hotspot.** On your phone, join the Wi-Fi network **Glint Distance Sensor Setup**. If a setup page doesn't open by itself, browse to `http://192.168.4.1`. Pick your network and enter its password.
-3. **USB.** Use the installer above and choose *Connect to Wi-Fi*.
+1. **Setup hotspot (recommended).** On your phone, join the Wi-Fi network **Glint Distance Sensor Setup**. If a setup page doesn't open by itself, browse to `http://192.168.4.1`. Tap your network in the list and enter its password.
+2. **Home Assistant (Bluetooth).** If Home Assistant has Bluetooth near the sensor, it shows *Discovered: Improv via BLE*. Click **Add**, then type your Wi-Fi network's name and password exactly. If it doesn't appear, use the hotspot instead.
+3. **USB.** Use the installer above and choose *Connect to Wi-Fi*, then pick your network from the list.
 
 The sensor only supports 2.4 GHz Wi-Fi.
 
