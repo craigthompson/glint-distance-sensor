@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#0f1318">
-<title>{{ site.title }}</title>
-<meta name="description" content="{{ site.description }}">
+<title>{% if page.heading %}{{ page.heading }} · {% endif %}{{ site.title }}</title>
+<meta name="description" content="{{ page.tagline | default: site.description }}">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%233d97ff'/%3E%3Cpath d='M12 5v9M8.5 10.5 12 14l3.5-3.5M7 18.5h10' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E">
 <style>
 :root {
@@ -121,6 +121,16 @@ esp-web-install-button { display: block; margin: 20px 0; }
   border-radius: 10px; padding: 12px 14px; color: var(--muted);
 }
 
+nav.tabs { display: inline-flex; gap: 4px; margin-top: 20px; padding: 4px; background: var(--card); border: 1px solid var(--line); border-radius: 999px; }
+nav.tabs a { color: var(--muted); padding: 6px 16px; border-radius: 999px; font-size: .95rem; }
+nav.tabs a:hover { color: var(--text); text-decoration: none; }
+nav.tabs a[aria-current="page"] { background: var(--accent); color: #fff; }
+main h3 { font-size: 1.05rem; margin: 24px 0 8px; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: .95rem; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--text); font-weight: 600; }
+td { color: #cfd7e1; }
+.table-wrap { overflow-x: auto; }
 footer { text-align: center; color: var(--muted); font-size: .9rem; padding: 0 0 48px; }
 footer a { color: var(--muted); text-decoration: underline; }
 
@@ -134,8 +144,12 @@ footer a { color: var(--muted); text-decoration: underline; }
 <div class="wrap">
   <header class="hero">
     <div class="logo"><svg viewBox="0 0 24 24"><path d="M12 3v13M7 11l5 5 5-5M4 21h16"/></svg></div>
-    <h1>{{ site.title }}</h1>
-    <p>{{ site.description }}</p>
+    <h1>{{ page.heading | default: site.title }}</h1>
+    <p>{{ page.tagline | default: site.description }}</p>
+    <nav class="tabs">
+      <a href="{{ site.baseurl }}/setup/"{% if page.url == "/setup/" %} aria-current="page"{% endif %}>Quick start</a>
+      <a href="{{ site.baseurl }}/"{% if page.url == "/" %} aria-current="page"{% endif %}>Install firmware</a>
+    </nav>
   </header>
   <main class="card">
 {{ content }}
