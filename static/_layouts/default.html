@@ -136,6 +136,10 @@ td { color: #cfd7e1; }
 .stats small { font-size: .55em; font-weight: 500; color: var(--muted); margin-left: 2px; letter-spacing: 0; white-space: nowrap; }
 .stats span { display: block; color: var(--muted); font-size: .85rem; margin-top: 2px; }
 /* Two-column spec tables: no header row; the first column names the spec. */
+.shots { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px; margin: 14px 0 18px; }
+.shots figure { margin: 0; flex: 1 1 240px; max-width: 360px; }
+.shots img { display: block; width: 100%; height: auto; border: 1px solid var(--line); border-radius: 10px; }
+.shots figcaption { color: var(--muted); font-size: .85rem; margin-top: 6px; }
 .screenshot { display: block; max-width: 100%; height: auto; margin: 14px 0; border: 1px solid var(--line); border-radius: 10px; }
 table.spec thead { display: none; }
 table.spec td:first-child { color: var(--text); font-weight: 600; width: 34%; }
