@@ -68,6 +68,10 @@ ota:
   - platform: esphome
 
 wifi:
+  # The device runs on USB power, so keep the radio awake. ESPHome's default on
+  # ESP32 ("light") lets it doze between beacons, which slowed replies from
+  # under 10 ms to 200-500 ms.
+  power_save_mode: none
   ap:
     ssid: "Glint Distance Sensor Setup"
 
