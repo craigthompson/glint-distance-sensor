@@ -147,8 +147,8 @@ footer a { color: var(--muted); text-decoration: underline; }
     <h1>{{ page.heading | default: site.title }}</h1>
     <p>{{ page.tagline | default: site.description }}</p>
     <nav class="tabs">
-      <a href="{{ site.baseurl }}/setup/"{% if page.url == "/setup/" %} aria-current="page"{% endif %}>Quick start</a>
-      <a href="{{ site.baseurl }}/"{% if page.url == "/" %} aria-current="page"{% endif %}>Install firmware</a>
+      <a href="{{ site.baseurl }}/"{% if page.url == "/" %} aria-current="page"{% endif %}>Quick start</a>
+      <a href="{{ site.baseurl }}/firmware/"{% if page.url == "/firmware/" %} aria-current="page"{% endif %}>Install firmware</a>
     </nav>
   </header>
   <main class="card">
