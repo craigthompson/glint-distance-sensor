@@ -26,7 +26,7 @@ Plug the sensor into USB power. After a second the light starts **blinking slowl
 2. A setup page usually opens by itself. If it doesn't, open your phone's web browser: the setup page should appear. If it still doesn't, go to `http://192.168.4.1`.
 3. Tap your network in the list and enter its password.
 
-<div class="shots"><figure><img src="{{ site.baseurl }}/images/setup-networks.jpg" width="360" height="232" alt="Setup page listing nearby Wi-Fi networks" loading="lazy"><figcaption>Tap your network</figcaption></figure><figure><img src="{{ site.baseurl }}/images/setup-password.png" width="360" height="425" alt="Setup page with network name and password fields and a Connect button" loading="lazy"><figcaption>Enter its password and tap Connect</figcaption></figure></div>
+<div class="shots"><figure><img src="{{ site.baseurl }}/images/setup-networks.jpg" width="360" height="394" alt="Setup page listing nearby Wi-Fi networks" loading="lazy"><figcaption>Tap your network</figcaption></figure><figure><img src="{{ site.baseurl }}/images/setup-password.png" width="360" height="425" alt="Setup page with network name and password fields and a Connect button" loading="lazy"><figcaption>Enter its password and tap Connect</figcaption></figure></div>
 
 The light **blinks fast** while it connects, then **blinks twice and pauses** once it's on your Wi-Fi. Your phone reconnects to your usual network by itself.
 
