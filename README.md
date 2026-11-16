@@ -10,7 +10,7 @@ A general-purpose Wi-Fi distance sensor for Home Assistant, built on ESPHome: an
 
 - Distance in mm, averaged over 1–10 samples per measurement (default 5)
 - Optional percentage mapped between a user-set 0% and 100% distance
-- Adjustable measurement interval (1 s – 24 h, default 30 min), a **Measure Now** button, and a **Measurements** switch to pause automatic measuring
+- Adjustable measurement interval (1 s – 24 h, default 30 min), a **Measure Now** button, and a **Scheduled Measurements** switch to pause measuring on the interval
 - Status LED breathes while idle and flashes while measuring; dimmable or off from Home Assistant
 - No Wi-Fi credentials or keys in the firmware. Onboarding over Improv BLE (no button press needed), a branded captive portal, or Improv Serial
 - Firmware updates delivered to Home Assistant from GitHub releases
@@ -24,7 +24,7 @@ Home Assistant may convert units to your preferred system, e.g. inches instead o
 
 ### Measurements
 
-Published after every measurement: every 30 min by default, about 10 s after Home Assistant connects, and when you press **Measure Now**. While **Measurements** is off, only **Measure Now** measures.
+Published after every measurement: every 30 min by default, about 10 s after Home Assistant connects, and when you press **Measure Now**. While **Scheduled Measurements** is off, only **Measure Now** measures.
 
 | Entity | Unit | Default | What it is |
 |---|---|---|---|
@@ -64,8 +64,8 @@ Also published after every measurement.
 
 | Entity | Type | Default | What it does |
 |---|---|---|---|
-| Measurements | Switch | Enabled | Turns automatic measurements on and off. While off, the device doesn't measure on its interval or when Home Assistant connects, and the last readings stay as they are; **Measure Now** still works. Turning it on measures right away. Remembered across restarts. |
-| Measure Now | Button | Enabled | Takes a measurement immediately, even while **Measurements** is off. |
+| Scheduled Measurements | Switch | Enabled | Turns measuring on the **Measurement Interval** on and off. While off, the device doesn't measure on its interval or when Home Assistant connects, and the last readings stay as they are; **Measure Now** still works. Turning it on measures right away. Remembered across restarts. |
+| Measure Now | Button | Enabled | Takes a measurement immediately, even while **Scheduled Measurements** is off. |
 | 0% Distance / 100% Distance | Number (mm) | Enabled | The ends of the **Percentage** range. Default 0, meaning unset. |
 | Measurement Interval | Number (s) | Enabled | Time between automatic measurements: 1 s to 24 h, default 1800 s (30 min). A measurement takes well under a second even at 10 samples, so 1 s works with any **Samples per Measurement**. Short intervals add a lot of history to Home Assistant's database. |
 | Samples per Measurement | Number | Enabled | Valid samples averaged per measurement: 1–10, default 5. |

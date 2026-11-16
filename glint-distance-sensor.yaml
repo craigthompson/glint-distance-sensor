@@ -90,7 +90,7 @@ api:
     - if:
         condition:
           and:
-            - switch.is_on: measurements
+            - switch.is_on: scheduled_measurements
             - not:
                 script.is_running: measure
         then:
@@ -518,12 +518,12 @@ number:
     entity_category: config
 
 switch:
-  # Turns automatic measurements on and off. While off, the device doesn't
+  # Turns scheduled measurements on and off. While off, the device doesn't
   # measure on its interval or when Home Assistant connects; Measure Now still
   # works. Turning it back on measures right away.
   - platform: template
-    id: measurements
-    name: Measurements
+    id: scheduled_measurements
+    name: Scheduled Measurements
     icon: mdi:play-pause
     optimistic: true
     restore_mode: RESTORE_DEFAULT_ON
@@ -719,7 +719,7 @@ interval:
       - if:
           condition:
             and:
-              - switch.is_on: measurements
+              - switch.is_on: scheduled_measurements
               - lambda: 'return id(seconds_since_measure) >= (uint32_t) id(measure_interval).state;'
               - not:
                   script.is_running: measure
