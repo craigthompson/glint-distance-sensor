@@ -89,8 +89,10 @@ api:
     - delay: 10s
     - if:
         condition:
-          not:
-            script.is_running: measure
+          and:
+            - switch.is_on: measurements
+            - not:
+                script.is_running: measure
         then:
           - lambda: 'id(seconds_since_measure) = 0;'
           - script.execute: measure
@@ -165,6 +167,12 @@ globals:
     initial_value: 'NAN'
   # Readings the sensor reported during this measurement, valid or not
   # (out of range counts). Zero means the sensor never answered.
+  # reading_count when the current sample was started; the measure script waits
+  # for it to change.
+  - id: reading_count_at_start
+    type: int
+    restore_value: no
+    initial_value: '0'
   - id: reading_count
     type: int
     restore_value: no
@@ -487,7 +495,7 @@ number:
     name: Measurement Interval
     unit_of_measurement: s
     icon: mdi:timer-outline
-    min_value: 5
+    min_value: 1
     max_value: 86400
     step: 1
     mode: box
@@ -508,6 +516,25 @@ number:
     restore_value: true
     initial_value: 5
     entity_category: config
+
+switch:
+  # Turns automatic measurements on and off. While off, the device doesn't
+  # measure on its interval or when Home Assistant connects; Measure Now still
+  # works. Turning it back on measures right away.
+  - platform: template
+    id: measurements
+    name: Measurements
+    icon: mdi:play-pause
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    on_turn_on:
+      - if:
+          condition:
+            not:
+              script.is_running: measure
+          then:
+            - lambda: 'id(seconds_since_measure) = 0;'
+            - script.execute: measure
 
 button:
   - platform: template
@@ -566,9 +593,16 @@ script:
               const int wanted = (int) id(samples_per_measurement).state;
               return id(sample_count) < wanted && id(attempt_count) < wanted * 2;
           then:
-            - lambda: 'id(attempt_count) += 1;'
+            - lambda: |-
+                id(attempt_count) += 1;
+                id(reading_count_at_start) = id(reading_count);
             - component.update: vl53_raw
-            - delay: 200ms
+            # A reading takes about 35 ms. Wait for it rather than a fixed time:
+            # starting the next one early makes the driver drop it.
+            - wait_until:
+                condition:
+                  lambda: 'return id(reading_count) != id(reading_count_at_start);'
+                timeout: 600ms
       - lambda: |-
           id(measuring) = false;
           const int wanted = (int) id(samples_per_measurement).state;
@@ -685,6 +719,7 @@ interval:
       - if:
           condition:
             and:
+              - switch.is_on: measurements
               - lambda: 'return id(seconds_since_measure) >= (uint32_t) id(measure_interval).state;'
               - not:
                   script.is_running: measure
