@@ -11,7 +11,7 @@
 #   VL53L0X GND   -> GND
 #   VL53L0X SCL   -> IO6
 #   VL53L0X SDA   -> IO7
-#   VL53L0X XSHUT -> IO5   (hardware reset/enable; the GPIO1 interrupt pin is not used)
+#   VL53L0X XSHUT -> IO5   (hardware reset at every boot; the GPIO1 interrupt pin is not used)
 #   Onboard LED   =  IO8   (active low; status patterns, see the LED interval)
 #   BOOT button   =  IO9   (hold 10 s for factory reset)
 
@@ -28,6 +28,24 @@ esphome:
   friendly_name: ${friendly_name}
   name_add_mac_suffix: true
   on_boot:
+    # Hardware-reset the VL53L0X at every boot, before its driver sets it up
+    # (priority 600). A restart or update reboots only the ESP32; the sensor
+    # stays powered and can stay stuck, returning nothing but out-of-range
+    # readings until it is unplugged. Holding XSHUT low puts it in hardware
+    # standby, the same as cutting its power. The pin is already low since
+    # the xshut output's setup; hold it 10 ms, then release and give the
+    # sensor its 1.2 ms (max) firmware boot time.
+    - priority: 700
+      then:
+        - lambda: |-
+            delay(10);
+            // While held in reset the sensor must not answer on I2C. If it
+            // does, XSHUT isn't connected and only unplugging resets it.
+            uint8_t model = 0;
+            if (id(vl53_raw).read_byte(0xC0, &model))
+              ESP_LOGW("xshut", "Sensor answered while held in reset (model 0x%02X): XSHUT not connected?", model);
+            id(xshut).turn_on();
+            delay(2);
     # Factory reset without opening the case: unplug and replug 5 times in a
     # row, each within 10 s of plugging in. Counts power-on boots only, so
     # updates, restarts and crashes never trigger it. Saved straight to flash
@@ -157,6 +175,20 @@ globals:
     type: float
     restore_value: no
     initial_value: '0'
+  # The same rates over every completed reading, valid or not, so Home
+  # Assistant still gets them when nothing is in range.
+  - id: any_signal_sum
+    type: float
+    restore_value: no
+    initial_value: '0'
+  - id: any_ambient_sum
+    type: float
+    restore_value: no
+    initial_value: '0'
+  - id: any_rate_count
+    type: int
+    restore_value: no
+    initial_value: '0'
   - id: sample_min
     type: float
     restore_value: no
@@ -215,6 +247,10 @@ globals:
     initial_value: '"Breathe"'
 
 output:
+  # VL53L0X XSHUT: low holds the sensor in reset (see esphome: on_boot).
+  - platform: gpio
+    id: xshut
+    pin: GPIO5
   - platform: ledc
     id: led_output
     pin: GPIO8
@@ -293,7 +329,6 @@ sensor:
     internal: true
     i2c_id: bus_a
     address: 0x29
-    enable_pin: GPIO5
     long_range: true
     timeout: 500ms
     update_interval: never
@@ -303,19 +338,28 @@ sensor:
             // The vl53l0x component reports metres; everything else here is mm.
             if (!id(measuring)) return;
             id(reading_count) += 1;
+            // The driver only reads the range, but the rest of the result block
+            // stays valid until the next reading: signal rate at 0x1A and ambient
+            // rate at 0x1C, both 9.7 fixed point in mega-counts per second (Mcps).
+            // Stored in kilo-counts per second (kcps): Mcps * 1000.
+            uint16_t sig_raw, amb_raw;
+            const bool rates = id(vl53_raw).read_byte_16(0x1A, &sig_raw) && id(vl53_raw).read_byte_16(0x1C, &amb_raw);
+            const float signal = sig_raw / 128.0f * 1000.0f, ambient = amb_raw / 128.0f * 1000.0f;
+            if (rates) {
+              id(any_signal_sum) += signal;
+              id(any_ambient_sum) += ambient;
+              id(any_rate_count) += 1;
+            }
             if (!std::isnan(x) && x > 0) {
               const float mm = x * 1000.0f;
               id(sample_sum) += mm;
               id(sample_count) += 1;
               if (std::isnan(id(sample_min)) || mm < id(sample_min)) id(sample_min) = mm;
               if (std::isnan(id(sample_max)) || mm > id(sample_max)) id(sample_max) = mm;
-              // The driver only reads the range, but the rest of the result block
-              // stays valid until the next reading: signal rate at 0x1A and ambient
-              // rate at 0x1C, both 9.7 fixed point in mega-counts per second (Mcps).
-              // Stored in kilo-counts per second (kcps): Mcps * 1000.
-              uint16_t raw;
-              if (id(vl53_raw).read_byte_16(0x1A, &raw)) id(signal_sum) += raw / 128.0f * 1000.0f;
-              if (id(vl53_raw).read_byte_16(0x1C, &raw)) id(ambient_sum) += raw / 128.0f * 1000.0f;
+              if (rates) {
+                id(signal_sum) += signal;
+                id(ambient_sum) += ambient;
+              }
             }
 
   - platform: template
@@ -420,6 +464,14 @@ sensor:
       disabled_by_default: true
 
 text_sensor:
+  # Why the last measurement did or didn't give a distance.
+  - platform: template
+    id: measurement_result
+    name: Measurement Result
+    icon: mdi:ruler
+    update_interval: never
+    entity_category: diagnostic
+
   # When the last measurement ran. Sent as ISO 8601 text: a numeric sensor is a
   # 32-bit float, which rounds Unix timestamps to the nearest 128 s.
   - platform: template
@@ -573,6 +625,9 @@ script:
           id(sample_max) = NAN;
           id(signal_sum) = 0;
           id(ambient_sum) = 0;
+          id(any_signal_sum) = 0;
+          id(any_ambient_sum) = 0;
+          id(any_rate_count) = 0;
           id(reading_count) = 0;
           id(attempt_count) = 0;
           id(sensor_fault) = false;
@@ -628,11 +683,18 @@ script:
             }
           }
           id(sensor_problem).publish_state(id(sensor_fault));
+          id(measurement_result).publish_state(
+              id(sensor_fault) ? "Sensor not responding"
+              : !std::isnan(id(distance).state) ? "OK" : "Nothing in range");
           id(valid_samples).publish_state(id(sample_count));
           id(reading_spread).publish_state(id(sample_count) >= 2 ? id(sample_max) - id(sample_min) : NAN);
-          if (id(sample_count) > 0) {
-            const float signal = id(signal_sum) / id(sample_count);
-            const float ambient = id(ambient_sum) / id(sample_count);
+          // Average over the valid samples; with none, over every reading, so a
+          // covered sensor (strong signal) and an empty view (none) look different.
+          const bool valid = id(sample_count) > 0;
+          const int n = valid ? id(sample_count) : id(any_rate_count);
+          if (n > 0) {
+            const float signal = (valid ? id(signal_sum) : id(any_signal_sum)) / n;
+            const float ambient = (valid ? id(ambient_sum) : id(any_ambient_sum)) / n;
             id(signal_strength).publish_state(signal);
             id(ambient_ir).publish_state(ambient);
             id(ambient_ir_level).publish_state(ambient >= ${ambient_ir_high_kcps} ? "High"
@@ -650,9 +712,8 @@ script:
                 id: status_led
                 effect: !lambda 'return id(prev_effect);'
       # Sensor fault: reset the VL53L0X and reboot so the driver sets it up from
-      # scratch. A software reboot alone leaves the sensor powered (and possibly
-      # stuck), so also send its I2C soft-reset command; setup then resets it
-      # in hardware through XSHUT (enable_pin). Gives up after 3
+      # scratch. Send its I2C soft-reset command too, then the reboot resets it
+      # in hardware through XSHUT (esphome: on_boot). Gives up after 3
       # tries without a good measurement, to avoid a reboot loop.
       - if:
           condition:

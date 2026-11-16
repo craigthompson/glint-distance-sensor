@@ -40,13 +40,14 @@ Also published after every measurement.
 
 | Entity | Unit | Default | What it is |
 |---|---|---|---|
+| Measurement Result | text | Enabled | Why the last measurement did or didn't give a distance: **OK**, **Nothing in range** (the sensor works but no target is within range, e.g. more than about 2 m away, or very dark), or **Sensor not responding** (same as **Sensor Problem** on). |
 | Sensor Problem | on/off | Enabled | **On** when the sensor stops responding: setup failed, no reading came back, or a reading never finished. The device then resets the sensor and restarts, up to 3 times. **Off** after a good measurement, or when nothing is in range. Use it for a "sensor needs attention" automation. |
 | Valid Samples | count | Enabled | How many valid samples the last measurement averaged. Normally equals **Samples per Measurement**. The device keeps trying, up to twice as many attempts, so lower numbers mean the target is at the edge of range. |
 | Reading Spread | mm | Enabled | Largest minus smallest valid sample in the last measurement. A few mm is normal; a large spread means a noisy or uneven surface. Unknown with fewer than 2 samples. |
 | Last Measurement | date/time | Enabled | When the last measurement ran. The time comes from Home Assistant, so it's blank until the device has synced its clock. |
-| Ambient IR | kcps | Enabled | Infrared light around the sensor, in thousands of photon counts per second. The VL53L0X only sees infrared at 940 nm, the wavelength of its own laser, so this isn't visible light and can't be converted to lux or lumens. Sunlight and incandescent bulbs read high; LED and fluorescent lighting reads near zero. High values add noise and shorten the range. |
+| Ambient IR | kcps | Enabled | Infrared light around the sensor, in thousands of photon counts per second. The VL53L0X only sees infrared at 940 nm, the wavelength of its own laser, so this isn't visible light and can't be converted to lux or lumens. Sunlight and incandescent bulbs read high; LED and fluorescent lighting reads near zero. High values add noise and shorten the range. Averaged over the valid samples, or over every reading when none was valid. |
 | Ambient IR Level | Low / Moderate / High | Enabled | **Ambient IR** in plain language: Low below 200 kcps, Moderate up to 1000 kcps, High above. These thresholds are provisional; set them with `ambient_ir_moderate_kcps` and `ambient_ir_high_kcps` in `glint-distance-sensor.yaml`. |
-| Signal Strength | kcps | Disabled | How much of the sensor's own laser light comes back from the target. Higher is better. It drops with distance and with dark, shiny or angled targets. Compare it with Ambient IR when readings are unreliable. |
+| Signal Strength | kcps | Disabled | How much of the sensor's own laser light comes back from the target. Higher is better. It drops with distance and with dark, shiny or angled targets. Compare it with Ambient IR when readings are unreliable. With no valid samples it's averaged over every reading: a strong signal then means something is there but out of range or too close, and a weak one that nothing is in view. |
 
 ### Device health (diagnostic)
 
@@ -95,7 +96,7 @@ Onboard LED: IO8 (active low). BOOT button: IO9 (optional; hold 10 s for factory
 
 **Factory reset without opening the case:** unplug and replug the sensor 5 times in a row, plugging it back in within 10 s each time. Only power-on boots count, so updates, restarts and crashes never trigger it.
 
-XSHUT is required. At every boot (power-up, firmware update, **Restart**, or a crash) the firmware pulls XSHUT low to reset the sensor in hardware. Without it, a software restart can leave the still-powered VL53L0X stuck reporting "out of range" until it's unplugged. Leave the sensor's GPIO1 pin unconnected.
+XSHUT is required. At every boot (power-up, firmware update, **Restart**, or a crash) the firmware holds XSHUT low for 10 ms to reset the sensor in hardware. Without it, a software restart can leave the still-powered VL53L0X stuck reporting "out of range" until it's unplugged. Leave the sensor's GPIO1 pin unconnected.
 
 ## Bluetooth proxy
 

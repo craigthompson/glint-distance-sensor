@@ -65,7 +65,7 @@ Sunlight on the sensor or the target shortens the range and adds noise; LED and 
 | Discovery | Automatic (Zeroconf); Bluetooth setup shows up under Discovered |
 | Connection | Local push over the ESPHome native API, encrypted with a key Home Assistant sets on adoption |
 | Measurements | **Distance** (mm, converted to your units), **Percentage** between your own 0% and 100% distances |
-| Measurement quality | Valid Samples, Reading Spread, Signal Strength, Ambient IR and Ambient IR Level, Last Measurement, Sensor Problem |
+| Measurement quality | Measurement Result, Valid Samples, Reading Spread, Signal Strength, Ambient IR and Ambient IR Level, Last Measurement, Sensor Problem |
 | Device health | Wi-Fi Signal, Uptime, Chip Temperature, Last Restart Reason, Firmware Version, IP Address, Wi-Fi Network, Access Point, Free Memory, Loop Time |
 | Controls | Measure Now, Scheduled Measurements on/off, Measurement Interval, Samples per Measurement, 0% and 100% Distance, Status LED, Bluetooth Proxy, Restart, Factory Reset |
 | Updates | Firmware updates appear in Home Assistant and install with one click |
