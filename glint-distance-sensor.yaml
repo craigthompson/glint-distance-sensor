@@ -229,7 +229,7 @@ sensor:
     internal: true
     i2c_id: bus_a
     address: 0x29
-    # enable_pin: GPIO5
+    enable_pin: GPIO5
     long_range: true
     timeout: 500ms
     update_interval: never
@@ -560,8 +560,8 @@ script:
                 effect: !lambda 'return id(prev_effect);'
       # Sensor fault: reset the VL53L0X and reboot so the driver sets it up from
       # scratch. A software reboot alone leaves the sensor powered (and possibly
-      # stuck), so also send its I2C soft-reset command; with XSHUT wired
-      # (enable_pin), setup resets it in hardware as well. Gives up after 3
+      # stuck), so also send its I2C soft-reset command; setup then resets it
+      # in hardware through XSHUT (enable_pin). Gives up after 3
       # tries without a good measurement, to avoid a reboot loop.
       - if:
           condition:

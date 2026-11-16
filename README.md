@@ -82,11 +82,11 @@ Devices taken over in the ESPHome dashboard (**Take Control**) build their own f
 | GND | GND |
 | SCL | IO6 |
 | SDA | IO7 |
-| XSHUT | IO5 (optional, see below) |
+| XSHUT | IO5 |
 
 Onboard LED: IO8 (active low). BOOT button: IO9.
 
-XSHUT lets the firmware fully reset the sensor. Until it's wired, `enable_pin: GPIO5` stays commented out in `glint-distance-sensor.yaml`; don't connect IO5 to the sensor's GPIO1 pin while it's enabled.
+XSHUT is required. At every boot (power-up, firmware update, **Restart**, or a crash) the firmware pulls XSHUT low to reset the sensor in hardware. Without it, a software restart can leave the still-powered VL53L0X stuck reporting "out of range" until it's unplugged. Leave the sensor's GPIO1 pin unconnected.
 
 ## Repository layout
 
