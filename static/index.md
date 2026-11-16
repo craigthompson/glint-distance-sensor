@@ -37,6 +37,8 @@ The light **blinks fast** while it connects, then **blinks twice and pauses** on
 
 The light starts **breathing slowly**: the sensor is set up. It takes its first measurement a few seconds later.
 
+Nothing to install: ESPHome support is built into Home Assistant. You don't need the ESPHome Device Builder add-on. If the sensor doesn't show up, see [Home Assistant doesn't find the sensor](#home-assistant-doesnt-find-the-sensor).
+
 ## 4. Mount it
 
 The sensor measures the distance to whatever is straight in front of the small dark window on its front, up to about **2 metres**.
@@ -98,6 +100,12 @@ The sensor can't join your Wi-Fi. Check that it's within range and that the netw
 ### I can't find the setup hotspot
 
 Make sure the light is blinking slowly. If it's doing something else, the sensor already has Wi-Fi details; do a factory reset (below) to start over.
+
+### Home Assistant doesn't find the sensor
+
+Check that the light blinks twice and pauses: the sensor is on Wi-Fi and waiting. Home Assistant finds it automatically only if it's on the same network as the sensor. A separate network for smart devices (VLAN), or Home Assistant running in Docker without host networking, blocks discovery.
+
+To add it by hand, go to **Settings → Devices & services → Add integration → ESPHome** and enter the sensor's name, e.g. `glint-distance-sensor-a1b2c3.local`. Your router's list of connected devices shows the full name.
 
 ### Home Assistant asks for an IP address
 
