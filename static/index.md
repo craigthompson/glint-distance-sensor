@@ -32,9 +32,9 @@ The sensor only supports 2.4 GHz Wi-Fi.
 
 ## Add to Home Assistant
 
-Once the sensor is on your Wi-Fi, Home Assistant discovers it: go to **Settings → Devices & services**, find **ESPHome**, and click **Add**.
+Once the sensor is on your Wi-Fi, its light blinks twice and pauses, and Home Assistant discovers it: go to **Settings → Devices & services**, find **ESPHome**, and click **Add**.
 
-Then set **0% Distance** and **100% Distance** on the device page if you want a percentage.
+When it's added, the light starts breathing slowly. Then set **0% Distance** and **100% Distance** on the device page if you want a percentage.
 
 ## Updates
 
