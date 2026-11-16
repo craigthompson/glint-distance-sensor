@@ -73,6 +73,16 @@ All on the sensor's device page in Home Assistant:
 
 **Sensor Problem** turns on if the sensor stops responding, which makes it a good trigger for a "needs attention" notification.
 
+## Extend Bluetooth range (optional)
+
+The sensor can also work as a Bluetooth proxy, so Home Assistant hears Bluetooth devices near it: sensors, locks, and phones or tags for presence tracking.
+
+1. On the sensor's device page, turn on **Bluetooth Proxy**.
+2. Home Assistant adds it under **Settings → Devices & services → Bluetooth** by itself.
+3. For tracking, use **Private BLE Device** (phones and watches), **iBeacon Tracker**, or Bermuda from HACS for room-level presence.
+
+The proxy shares the sensor's radio with Wi-Fi, so it slows the sensor's Wi-Fi. If the sensor starts dropping off, turn the proxy off or move the sensor closer to your Wi-Fi.
+
 ## Status light
 
 | Light | Meaning |
