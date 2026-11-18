@@ -12,7 +12,7 @@ A general-purpose Wi-Fi distance sensor for Home Assistant, built on ESPHome: an
 
 - Distance in mm, averaged over 1–10 samples per measurement (default 5)
 - Optional percentage mapped between a user-set 0% and 100% distance
-- Adjustable measurement interval (1 s – 24 h, default 30 min), a **Measure Now** button, and a **Scheduled Measurements** switch to pause measuring on the interval
+- Adjustable measurement interval (0.5 s – 24 h in 0.1 s steps, default 30 min), a **Measure Now** button, and a **Scheduled Measurements** switch to pause measuring on the interval
 - Status LED breathes while idle and flashes while measuring; dimmable or off from Home Assistant
 - No Wi-Fi credentials or keys in the firmware. Onboarding over Improv BLE (no button press needed), a branded captive portal, or Improv Serial
 - Firmware updates delivered to Home Assistant from GitHub releases
@@ -71,7 +71,7 @@ Also published after every measurement.
 | Scheduled Measurements | Switch | Enabled | Turns measuring on the **Measurement Interval** on and off. While off, the device doesn't measure on its interval or when Home Assistant connects, and the last readings stay as they are; **Measure Now** still works. Turning it on measures right away. Remembered across restarts. |
 | Measure Now | Button | Enabled | Takes a measurement immediately, even while **Scheduled Measurements** is off. |
 | 0% Distance / 100% Distance | Number (mm) | Enabled | The ends of the **Percentage** range. Default 0, meaning unset. |
-| Measurement Interval | Number (s) | Enabled | Time between automatic measurements: 1 s to 24 h, default 1800 s (30 min). A measurement takes well under a second even at 10 samples, so 1 s works with any **Samples per Measurement**. Short intervals add a lot of history to Home Assistant's database. |
+| Measurement Interval | Number (s) | Enabled | Time between automatic measurements: 0.5 s to 24 h in 0.1 s steps, default 1800 s (30 min). A measurement takes about 0.2 s at 5 samples and about 0.4 s at 10, so 0.5 s works with any **Samples per Measurement**; if a measurement ever runs longer than the interval, the next one starts as soon as it finishes. Short intervals add a lot of history to Home Assistant's database. |
 | Samples per Measurement | Number | Enabled | Valid samples averaged per measurement: 1–10, default 5. |
 | Status LED | Light | Enabled | Breathes while idle and flashes while measuring. Turn it off or dim it here; picking the **None** effect makes it light steadily. Status patterns (see [Status light](#status-light)) take over when needed. |
 | Restart | Button | Enabled | Restarts the device. |
@@ -104,7 +104,7 @@ Turning on **Bluetooth Proxy** makes the sensor an [ESPHome Bluetooth proxy](htt
 
 Tracking uses Home Assistant's own Bluetooth integrations, with nothing extra on the sensor: **Private BLE Device** (phones and watches), **iBeacon Tracker**, or [Bermuda](https://github.com/agittins/bermuda) (HACS) for room-level presence from several proxies.
 
-Wi-Fi and Bluetooth share the ESP32-C3's radio. While the proxy is on, the sensor's Wi-Fi replies slow from about 10 ms to about 200–400 ms, and with a 1 s **Measurement Interval** some readings come 2 s apart. Measurements and Home Assistant keep working; if the sensor drops off Wi-Fi, turn the proxy off or move the sensor closer to the access point.
+Wi-Fi and Bluetooth share the ESP32-C3's radio. While the proxy is on, the sensor's Wi-Fi replies slow from about 10 ms to about 200–400 ms, and with a short **Measurement Interval** some readings come late. Measurements and Home Assistant keep working; if the sensor drops off Wi-Fi, turn the proxy off or move the sensor closer to the access point.
 
 ## Status light
 
