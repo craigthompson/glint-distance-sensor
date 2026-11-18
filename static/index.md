@@ -77,7 +77,7 @@ All on the sensor's device page in Home Assistant:
 | Setting | What it does |
 |---|---|
 | **Scheduled Measurements** | Turn measuring on the interval off and on. While off, only **Measure Now** measures. |
-| **Measurement Interval** | How often it measures. Default every 30 minutes; anything from 1 second to 24 hours. |
+| **Measurement Interval** | How often it measures. Default every 30 minutes; anything from 0.5 seconds to 24 hours, in steps of 0.1 seconds. |
 | **Samples per Measurement** | Readings averaged per measurement (1–10, default 5). More is smoother. |
 | **Status LED** | Turn the light off or dim it. Picking the **None** effect makes it light steadily. |
 | **Measure Now** | Measures right away. |
